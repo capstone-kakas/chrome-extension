@@ -17,7 +17,7 @@ Kakas 프로젝트를 위한 크롬 익스텐션입니다.
 kakas/
 ├── content_script.js       # 웹 페이지에서 동작하는 스크립트
 ├── popup.html              # 확장 프로그램 팝업 UI
-├── manifest.json           # 크롬 익스텐션 설정 파일 (manifest V3)
+└── manifest.json           # 크롬 익스텐션 설정 파일 (manifest V3)
 ---
 
 ## 🛠️ 설치 방법 (로컬 테스트)
