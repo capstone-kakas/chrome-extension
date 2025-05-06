@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "Chat Message Extractor",
+    "version": "1.0",
+    "description": "번개장터 채팅 메시지를 추출하여 AI분석을 통해 답변을 추천받습니다.",
+    "permissions": ["activeTab", "scripting"],
+    "host_permissions": [
+      "https://*.bunjang.co.kr/*",
+      "https://talk.bunjang.co.kr/*"
+    ],
+    "content_scripts": [
+      {
+        "matches": [
+          "https://talk.bunjang.co.kr/*"
+        ],
+        "js": ["content_script.js"],
+        "all_frames": true
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_title": "채팅 추출기"
+    }
+  }
