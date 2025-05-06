@@ -14,17 +14,22 @@ Kakas 프로젝트를 위한 크롬 익스텐션입니다.
 ---
 
 ## 📁 프로젝트 구조
-kakas/
-├── content_script.js       # 웹 페이지에서 동작하는 스크립트
-├── popup.html              # 확장 프로그램 팝업 UI
-└── manifest.json           # 크롬 익스텐션 설정 파일 (manifest V3)
+kakas/  
+content_script.js       
+- 웹 페이지에서 동작하는 스크립트
+
+popup.html
+- 확장 프로그램 팝업 UI
+
+manifest.json
+- 크롬 익스텐션 설정 파일 (manifest V3)  
 ---
 
 ## 🛠️ 설치 방법 (로컬 테스트)
 1. 크롬 브라우저에서 `chrome://extensions` 접속
-<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/d080a00a-7c63-4fcd-84d2-c845189beca7" />
-2. 우측 상단 "개발자 모드" ON
-3. "압축해제된 확장 프로그램을 로드" 클릭
+<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/d080a00a-7c63-4fcd-84d2-c845189beca7" />  
+2. 우측 상단 "개발자 모드" ON  <br>
+3. "압축해제된 확장 프로그램을 로드" 클릭  <br>
 4. 이 프로젝트 폴더(`kakas/`) 선택
 
 ---
