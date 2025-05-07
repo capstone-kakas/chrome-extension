@@ -1,4 +1,4 @@
-# Kakas Chrome Extension
+# Kakas Chrome Extension!
 
 Kakas 프로젝트를 위한 크롬 익스텐션입니다.  
 웹 페이지 상에서 필요한 정보를 추출하거나 사용자 편의를 위한 인터페이스를 제공합니다.
