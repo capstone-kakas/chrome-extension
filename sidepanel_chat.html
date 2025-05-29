@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=360, initial-scale=1.0">
+  <title>AI 네고</title>
+  <style>
+    :root {
+      --point: #3B82F6;
+      --point-light: #E0EDFF;
+      --point-gradient: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
+      --bg-card: #F8FAFC;
+      --border: #D9D9D9;
+      --shadow: 0px 4px 16px rgba(59,130,246,0.08), 0px 1.5px 4px rgba(0,0,0,0.04);
+      --text-strong: #222;
+      --text-main: #434343;
+      --text-sub: #888;
+      --text-placeholder: #B3B3B3;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', Arial, sans-serif;
+      background: var(--bg-card);
+      min-width: 360px;
+      max-width: 360px;
+      box-sizing: border-box;
+    }
+    .main-wrap {
+      width: 345px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 36px;
+    }
+    .greeting-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      margin-top: 36px;
+      margin-bottom: 0;
+    }
+    .greeting-title-block {
+      width: 100%;
+      min-height: 68px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .greeting-title {
+      color: var(--text-strong);
+      font-size: 34px;
+      font-family: 'Pretendard', Arial, sans-serif;
+      font-weight: 800;
+      word-break: keep-all;
+      text-align: left;
+      letter-spacing: -1px;
+      margin-bottom: 2px;
+    }
+    .greeting-desc {
+      color: var(--text-main);
+      font-size: 17px;
+      font-family: 'Pretendard', Arial, sans-serif;
+      font-weight: 600;
+      word-break: keep-all;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      letter-spacing: -0.5px;
+    }
+    .suggestion-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .suggestion-row {
+      display: flex;
+      gap: 8px;
+    }
+    .suggestion-btn {
+      padding: 10px 16px;
+      background: #fff;
+      border-radius: 16px;
+      border: 1.2px solid var(--point);
+      font-size: 13px;
+      font-family: 'Pretendard', Arial, sans-serif;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      margin-bottom: 0;
+      margin-top: 0;
+      border-style: solid;
+      border-width: 1.2px;
+      transition: border 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+    }
+    .suggestion-btn:hover, .suggestion-btn:focus {
+      border: 1.2px solid var(--point);
+      background: var(--point-light);
+      color: var(--text-strong);
+      box-shadow: 0px 6px 24px rgba(59,130,246,0.12);
+    }
+    .suggestion-btn:active {
+      background: #e6f0ff;
+      color: var(--text-strong);
+    }
+    .chat-input-area {
+      width: 100%;
+      padding: 0;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .quote-ref {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border-radius: 16px;
+      border: 1.2px solid var(--point);
+      box-shadow: var(--shadow);
+      padding: 10px 18px;
+      font-size: 13px;
+      color: var(--text-main);
+      font-family: 'Pretendard', Arial, sans-serif;
+      font-weight: 700;
+      margin-bottom: 10px;
+      margin-top: 0;
+      min-height: 32px;
+      max-width: 100%;
+      word-break: break-all;
+      transition: border 0.15s, box-shadow 0.15s;
+    }
+    .quote-ref .quote-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-main);
+      font-family: 'Pretendard', Arial, sans-serif;
+      font-weight: 700;
+    }
+    .quote-ref .quote-meta {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 500;
+      margin-left: 6px;
+    }
+    .quote-ref .quote-cancel {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 16px;
+      cursor: pointer;
+      margin-left: 8px;
+      font-weight: bold;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .quote-ref .quote-cancel:hover {
+      color: var(--point);
+    }
+    .chat-input-box {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 14px 18px;
+      margin-top: 8px;
+      border: 1.2px solid var(--border);
+      transition: border 0.15s, box-shadow 0.15s;
+    }
+    .chat-input-box:focus-within {
+      border: 1.2px solid var(--point);
+      box-shadow: 0px 6px 24px rgba(59,130,246,0.12);
+    }
+    .chat-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      outline: none;
+      font-family: 'Pretendard', Arial, sans-serif;
+      color: var(--text-strong);
+      font-weight: 500;
+    }
+    .chat-input::placeholder {
+      color: var(--text-placeholder);
+      font-weight: 400;
+    }
+    .send-btn {
+      background: var(--point-gradient);
+      border: none;
+      cursor: pointer;
+      margin-left: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 4px;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      transition: box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+    }
+    .send-btn:hover, .send-btn:focus {
+      box-shadow: 0 4px 16px rgba(59,130,246,0.18);
+    }
+    .send-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrap">
+    <div class="greeting-block">
+      <div class="greeting-title-block">
+        <div class="greeting-title">반가워요,</div>
+        <div class="greeting-desc">오늘도 제대로 깎아보자구요!</div>
+      </div>
+      <div class="suggestion-block">
+        <div class="suggestion-row">
+          <button class="suggestion-btn">지금까지 확인 못해본게 뭐야?</button>
+          <button class="suggestion-btn">방금 말에 어떻게 대답해야 해?</button>
+        </div>
+        <div class="suggestion-row">
+          <button class="suggestion-btn" style="width:100%">방금 했던 "원래 디지털 버전이 더 비싸요"라는 말이 사실이야?</button>
+        </div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <div class="quote-ref"></div>
+      <div class="chat-input-box">
+        <input class="chat-input" type="text" placeholder="무엇이든 물어보세요" />
+        <button class="send-btn">
+          <svg viewBox="0 0 24 24"><path d="M3 12l18-7-7 18-2.5-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="sidepanel_chat.js"></script>
+</body>
+</html> 

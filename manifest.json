@@ -1,13 +1,19 @@
 {
     "manifest_version": 3,
-    "name": "Chat Message Extractor",
+    "name": "Chat Side Panel",
     "version": "1.0",
-    "description": "번개장터 채팅 메시지를 추출하여 AI분석을 통해 답변을 추천받습니다.",
-    "permissions": ["activeTab", "scripting"],
+    "description": "채팅 메시지를 사이드탭에 표시하는 확장 프로그램",
+    "permissions": [
+      "sidePanel",
+      "scripting"
+    ],
     "host_permissions": [
       "https://*.bunjang.co.kr/*",
       "https://talk.bunjang.co.kr/*"
     ],
+    "side_panel": {
+      "default_path": "sidepanel_chat.html"
+    },
     "content_scripts": [
       {
         "matches": [
@@ -18,7 +24,9 @@
       }
     ],
     "action": {
-      "default_popup": "popup.html",
-      "default_title": "채팅 추출기"
+      "default_title": "채팅 사이드탭 열기"
+    },
+    "background": {
+      "service_worker": "background.js"
     }
-  }
+}

@@ -1,40 +1,57 @@
-setTimeout(() => {
-    // 1. span 태그 중 class에 "sc-izQBue"가 포함된 것들 선택
-    const chatElements = document.querySelectorAll("span.sc-izQBue");
-  
-    // 2. 메시지를 저장할 배열
-    const chatMessages = [];
-  
-    // 3. 각 span에서 <p> 태그를 찾아서 텍스트 추출
-    chatElements.forEach(span => {
-      const p = span.querySelector("p");
-      if (p) {
-        chatMessages.push(p.innerText);
+(() => {
+  // 0. DOM이 완전히 로드된 이후에 실행
+  window.addEventListener('load', () => {
+    // 1. 메시지 추출·업데이트 함수
+    function updateLog() {
+      const spans = document.querySelectorAll("span.sc-izQBue");
+      const messages = Array.from(spans)
+        .map(span => span.querySelector("p"))
+        .filter(p => p)
+        .map(p => p.innerText);
+
+      // 사이드탭에 메시지 전송
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_CHAT',
+        messages: messages
+      });
+    }
+
+    // 2. 초기 한 번 실행
+    updateLog();
+
+    // 3. 관찰 대상: 가능한 채팅 컨테이너로 한정하세요.
+    const chatContainer = document.body;
+
+    // 4. 옵저버 설정
+    const observer = new MutationObserver(mutations => {
+      let needsUpdate = false;
+      for (const m of mutations) {
+        if (m.type === "childList") {
+          for (const node of m.addedNodes) {
+            needsUpdate = true;
+            break;
+          }
+        }
+        if (needsUpdate) break;
       }
+      if (needsUpdate) updateLog();
     });
-  
-    // 4. 하단에 표시할 메시지 박스 생성
-    const logBox = document.createElement("div");
-    logBox.style.position = "fixed";
-    logBox.style.bottom = "0";
-    logBox.style.left = "0";
-    logBox.style.width = "100%";
-    logBox.style.maxHeight = "200px";
-    logBox.style.overflowY = "auto";
-    logBox.style.backgroundColor = "#111";
-    logBox.style.color = "#0f0";
-    logBox.style.fontSize = "12px";
-    logBox.style.padding = "10px";
-    logBox.style.zIndex = "9999";
-  
-    // 5. 메시지를 HTML로 변환
-    logBox.innerHTML = "<strong>📩 채팅 메시지:</strong><br>" + chatMessages.map(
-      (msg, i) => `[${i + 1}] ${msg}`
-    ).join("<br>");
-  
-    // 6. 페이지에 추가
-    document.body.appendChild(logBox);
-  
-    // 7. 디버깅용 alert
-    alert(`✅ 메시지 개수: ${chatMessages.length}`);
-  }, 3000); // 3초 후 실행 (DOM + React 렌더링이 다 끝나도록 여유 시간 줌)
+
+    // 5. 실제 관찰 시작
+    observer.observe(chatContainer, {
+      childList: true,
+      subtree: true
+    });
+
+    // (선택) 일정 시간 후 자동 해제
+    setTimeout(() => observer.disconnect(), 90_000);
+  });
+
+  document.addEventListener('mouseup', () => {
+    const selection = window.getSelection();
+    const selectedText = selection ? selection.toString().trim() : '';
+    if (selectedText.length > 0) {
+      chrome.runtime.sendMessage({ type: 'SELECTED_TEXT', text: selectedText });
+    }
+  });
+})();
