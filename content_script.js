@@ -117,6 +117,108 @@
     initialize();
   }
   } else if (isProductPage) {
-    // TODO: Implement product page script here
+    // 상품 정보를 가져오는 함수
+    function getProductInfo() {
+      // ✅ 0. 상품 ID 추출
+      const pathParts = window.location.pathname.split('/');
+      const productId = pathParts[2] || null;
+
+      // ✅ 1. 상품명
+      const titleEl = document.querySelector(
+        '.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg'
+      );
+      const productName = titleEl ? titleEl.textContent.trim() : null;
+
+      // ✅ 2. 가격
+      const priceEl = document.querySelector(
+        '.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp'
+      );
+      const price = priceEl ? priceEl.textContent.trim() : null;
+
+      // ✅ 3. 상품상태
+      const valueEls = document.querySelectorAll(
+        '.ProductSummarystyle__Value-sc-oxz0oy-21.eLyjky'
+      );
+      const status = valueEls[0] ? valueEls[0].textContent.trim() : null;
+
+      // ✅ 4. 배송비
+      let deliveryFee = null;
+      if (valueEls[1]) {
+        const span = valueEls[1].querySelector('span');
+        deliveryFee = span ? span.textContent.trim() : valueEls[1].textContent.trim();
+      }
+
+      // ✅ 5. 상품설명
+      const descEl = document.querySelector(
+        '.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p'
+      );
+      const description = descEl ? descEl.textContent.trim() : null;
+
+      // ✅ 6. 카테고리
+      const categoryEls = document.querySelectorAll(
+        '.ProductInfostyle__Category-sc-ql55c8-8.EVvbD a'
+      );
+      const categories = Array.from(categoryEls).map(a => a.textContent.trim());
+
+      // ✅ 6-1. 카테고리 id
+      const categoryId = 0;
+      if (categories[2] == '닌텐도/NDS/Wii') {
+        categoryId = 1;
+      } else if (categories[2] == '소니/플레이스테이션') {
+        categoryId = 2;
+      } else if (categories[2] == 'XBOX') {
+        categoryId = 3;
+      } else if (categories[2] == 'PC게임') {
+        categoryId = 4;
+      } else if (categories[2] == '기타 게임/타이틀') {
+        categoryId = 5;
+      }
+
+      // ✅ 7. 판매자 이름 및 ID
+      const sellerLink = document.querySelector(
+        'a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL'
+      );
+      const sellerName = sellerLink ? sellerLink.textContent.trim() : null;
+      const sellerHref = sellerLink ? sellerLink.getAttribute('href') : null;
+      const sellerId = sellerHref ? sellerHref.split('/')[2] : null;
+
+
+      // ✅ 결과 객체 생성
+      const data = {
+        productId,
+        productName,
+        price,
+        status,
+        deliveryFee,
+        description,
+        categories,
+        categoryId,
+        sellerName,
+        sellerId
+      };
+
+      return data;
+    }
+
+    // 메시지 리스너 추가
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.type === 'GET_PRODUCT_INFO') {
+        const productInfo = getProductInfo();
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_PRODUCT_INFO',
+          productInfo: productInfo
+        });
+      }
+    });
+
+    // 페이지 로드 완료 후 상품 정보 전송
+    window.addEventListener('load', () => {
+      const productInfo = getProductInfo();
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_PRODUCT_INFO',
+        productInfo: productInfo
+      });
+    });
+
   }
 })();
