@@ -222,6 +222,58 @@
       fill: #fff;
       display: block;
     }
+    /* 상품 정보 스타일 */
+    .product-info-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .product-info-container h4 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .product-info-container p {
+      margin: 5px 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .product-info-container .price {
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+    .product-info-container .status {
+      color: #4CAF50;
+    }
+    .product-info-container .delivery {
+      color: #2196F3;
+    }
+    .product-info-container .category {
+      color: #9C27B0;
+    }
+    .product-info-container .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 5px;
+    }
+    .product-info-container .close-btn:hover {
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -250,6 +302,15 @@
         </button>
       </div>
     </div>
+  </div>
+  <!-- 상품 정보 컨테이너 -->
+  <div id="productInfoContainer" class="product-info-container" style="display: none;">
+    <button class="close-btn">&times;</button>
+    <h4>상품 정보</h4>
+    <p class="price"></p>
+    <p class="status"></p>
+    <p class="delivery"></p>
+    <p class="category"></p>
   </div>
   <script src="sidepanel_chat.js"></script>
 </body>

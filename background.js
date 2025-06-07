@@ -1,11 +1,63 @@
+// 메시지 타입 상수
+const MESSAGE_TYPES = {
+  SELECTED_TEXT: 'SELECTED_TEXT',
+  UPDATE_PRODUCT_INFO: 'UPDATE_PRODUCT_INFO',
+  GET_PRODUCT_BY_NAME: 'GET_PRODUCT_BY_NAME',
+  CHECK_TAB_ACTIVE: 'CHECK_TAB_ACTIVE'
+};
+
 // 확장 프로그램 아이콘 클릭 시 사이드탭 열기
 chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
-// content script에서 받은 SELECTED_TEXT 메시지를 사이드패널로 중계
+// 상품 정보 저장소
+let productStore = new Map();
+
+// 통합된 메시지 리스너
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'SELECTED_TEXT') {
-    chrome.runtime.sendMessage(msg);
+  console.log('Background received message:', msg);
+
+  try {
+    switch (msg.type) {
+      case MESSAGE_TYPES.SELECTED_TEXT:
+        chrome.runtime.sendMessage(msg);
+        break;
+
+      case MESSAGE_TYPES.UPDATE_PRODUCT_INFO:
+        const productInfo = msg.productInfo;
+        console.log('Storing product info:', productInfo);
+        if (productInfo && productInfo.productId) {
+          productStore.set(productInfo.productId, productInfo);
+          console.log('Current product store:', Array.from(productStore.entries()));
+        }
+        break;
+
+      case MESSAGE_TYPES.GET_PRODUCT_BY_NAME:
+        const productName = msg.productName;
+        console.log('Searching for product:', productName);
+        let matchedProduct = null;
+        
+        for (const [_, product] of productStore) {
+          if (product.productName === productName) {
+            matchedProduct = product;
+            break;
+          }
+        }
+        
+        console.log('Found product:', matchedProduct);
+        sendResponse({ product: matchedProduct });
+        break;
+
+      case MESSAGE_TYPES.CHECK_TAB_ACTIVE:
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          sendResponse({ isActive: tabs[0]?.id === sender.tab?.id });
+        });
+        break;
+    }
+  } catch (error) {
+    console.error('Error in message handler:', error);
   }
+  
+  return true; // 비동기 응답을 위해 true 반환
 }); 

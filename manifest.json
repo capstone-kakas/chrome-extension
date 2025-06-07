@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "까까스",
+    "name": "까까스13",
     "version": "1.0",
     "description": "중고 거래 도우미",
     "icons": {
@@ -10,10 +10,13 @@
     "permissions": [
       "sidePanel",
       "scripting",
-      "tabs"
+      "tabs",
+      "storage"
     ],
     "host_permissions": [
-      "https://*.bunjang.co.kr/*"
+      "https://*.bunjang.co.kr/*",
+      "<all_urls>",
+      "http://13.125.148.205:8080/*"
     ],
     "side_panel": {
       "default_path": "sidepanel.html"
@@ -21,11 +24,11 @@
     "content_scripts": [
       {
         "matches": [
-          "https://talk.bunjang.co.kr/*",
-          "https://m.bunjang.co.kr/products/*"
+          "https://m.bunjang.co.kr/*",
+          "https://talk.bunjang.co.kr/*"
         ],
         "js": ["content_script.js"],
-        "all_frames": true
+        "run_at": "document_end"
       }
     ],
     "action": {

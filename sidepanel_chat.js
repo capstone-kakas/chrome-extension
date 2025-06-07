@@ -34,7 +34,7 @@ const quoteRef = document.querySelector('.quote-ref');
 
 function showQuoteRef(text) {
   quoteRef.innerHTML = `
-    <span class="quote-text">“${text}”</span>
+    <span class="quote-text">"${text}"</span>
     <span class="quote-meta">(참고중)</span>
     <button class="quote-cancel" title="인용 취소" id="quote-cancel">✕</button>
   `;
@@ -50,4 +50,68 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'SELECTED_TEXT' && msg.text) {
     showQuoteRef(msg.text);
   }
+  return true;
+});
+
+// 상품 정보 표시 함수
+function displayProductInfo(productInfo) {
+    const container = document.getElementById('productInfoContainer');
+    if (!container) return;
+
+    // 상품 정보 업데이트
+    container.querySelector('.price').textContent = `가격: ${productInfo.price}`;
+    container.querySelector('.status').textContent = `상태: ${productInfo.status}`;
+    container.querySelector('.delivery').textContent = `배송비: ${productInfo.deliveryFee}`;
+    container.querySelector('.category').textContent = `카테고리: ${productInfo.categories.join(' > ')}`;
+
+    // 컨테이너 표시
+    container.style.display = 'block';
+
+    // 닫기 버튼 이벤트 리스너
+    const closeBtn = container.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            container.style.display = 'none';
+        };
+    }
+}
+
+// 페이지 로드 시 상품 정보 매칭 시도
+window.addEventListener('load', () => {
+    // 현재 탭의 URL 가져오기
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        if (!tabs[0]) return;
+        
+        const url = tabs[0].url;
+        if (url.includes('talk2/user')) {
+            // content script가 준비될 때까지 재시도
+            function trySendMessage(retryCount = 0) {
+                if (retryCount > 5) {
+                    console.log('Max retries reached, giving up...');
+                    return;
+                }
+
+                chrome.tabs.sendMessage(tabs[0].id, {type: 'GET_PRODUCT_INFO'}, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log(`Attempt ${retryCount + 1}: Content script not ready, retrying in 1 second...`);
+                        setTimeout(() => trySendMessage(retryCount + 1), 1000);
+                        return;
+                    }
+                    
+                    console.log('Successfully connected to content script');
+                });
+            }
+
+            // 첫 시도
+            trySendMessage();
+        }
+    });
+});
+
+// content script로부터 상품 정보를 받아 처리
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'PRODUCT_FOUND' && message.productInfo) {
+        displayProductInfo(message.productInfo);
+    }
+    return true;
 }); 
