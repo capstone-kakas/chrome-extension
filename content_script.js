@@ -1,4 +1,4 @@
-// 메시지 타입 상수
+// 상수 정의
 const MESSAGE_TYPES = {
   SELECTED_TEXT: 'SELECTED_TEXT',
   UPDATE_PRODUCT_INFO: 'UPDATE_PRODUCT_INFO',
@@ -6,7 +6,50 @@ const MESSAGE_TYPES = {
   CHECK_TAB_ACTIVE: 'CHECK_TAB_ACTIVE'
 };
 
-// 메시지 전송 함수 (재시도 로직 포함)
+const URL_PATTERNS = {
+  TALK_PAGE: /^https:\/\/m\.bunjang\.co\.kr\/talk2\/user\/\d+/,
+  TALK_PAGE_ALT: /^https:\/\/talk\.bunjang\.co\.kr\/?$/,
+  PRODUCT_PAGE: /^https:\/\/m\.bunjang\.co\.kr\/products\/\d+/
+};
+
+const CATEGORY_MAPPING = {
+  '닌텐도/NDS/Wii': 1,
+  '소니/플레이스테이션': 2,
+  'XBOX': 3,
+  'PC게임': 4,
+  '기타 게임/타이틀': 5
+};
+
+// API 관련 함수
+async function sendChatroomRequest(productInfo) {
+  try {
+    const response = await fetch('https://13.125.148.205:443/api/chatroom', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        memberId: productInfo.memberId ?? 0,
+        chatRoomTitle: productInfo.productName ?? '제목 없음',
+        content: productInfo.description ?? '',
+        category: productInfo.categoryId ?? 0,
+        deliveryFee: productInfo.deliveryFee ?? '',
+        seller: Number(productInfo.sellerId) || 0,
+        price: productInfo.price ?? '',
+        status: productInfo.status ?? ''
+      })
+    });
+    
+    const data = await response.json();
+    console.log('✅ 서버 응답:', data);
+    return data;
+  } catch (err) {
+    console.error('❗ API 호출 에러:', err);
+    throw err;
+  }
+}
+
+// 메시지 전송 유틸리티
 function sendMessageWithRetry(message, maxRetries = 3) {
   return new Promise((resolve, reject) => {
     let retryCount = 0;
@@ -32,78 +75,268 @@ function sendMessageWithRetry(message, maxRetries = 3) {
   });
 }
 
-function sendChatroomRequest(productInfo) {
-  fetch('http://13.125.148.205:8080/api/chatroom', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      memberId: productInfo.memberId ?? 0,
-      chatRoomTitle: productInfo.productName ?? '제목 없음',
-      content: productInfo.description ?? '',
-      category: productInfo.categoryId ?? 0,
-      deliveryFee: productInfo.deliveryFee ?? '',
-      seller: Number(productInfo.sellerId) || 0,
-      price: productInfo.price ?? '',
-      status: productInfo.status ?? ''
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log('✅ 서버 응답:', data);
-  })
-  .catch(err => {
-    console.error('❗ API 호출 에러:', err);
+// 상품 정보 관련 함수
+function getProductInfo() {
+  console.log('Getting product info from product page');
+  
+  return new Promise((resolve) => {
+    const pathParts = window.location.pathname.split('/');
+    const productId = pathParts[2] || null;
+
+    // DOM이 준비될 때까지 대기하는 함수
+    const waitForElement = (selector, timeout = 10000) => {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(selector)) {
+          return resolve(document.querySelector(selector));
+        }
+
+        const observer = new MutationObserver(() => {
+          if (document.querySelector(selector)) {
+            observer.disconnect();
+            resolve(document.querySelector(selector));
+          }
+        });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+
+        // 타임아웃 설정
+        setTimeout(() => {
+          observer.disconnect();
+          reject(new Error(`Element ${selector} not found`));
+        }, timeout);
+      });
+    };
+
+    // 모든 필요한 요소가 로드될 때까지 대기
+    Promise.all([
+      waitForElement('.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg'),
+      waitForElement('.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp'),
+      waitForElement('.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p'),
+      waitForElement('a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL')
+    ]).then(() => {
+      const titleEl = document.querySelector('.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg');
+      const priceEl = document.querySelector('.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp');
+      const valueEls = document.querySelectorAll('.ProductSummarystyle__Value-sc-oxz0oy-21.eLyjky');
+      const descEl = document.querySelector('.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p');
+      const categoryEls = document.querySelectorAll('.ProductInfostyle__Category-sc-ql55c8-8.EVvbD a');
+      const sellerLink = document.querySelector('a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL');
+
+      const categories = Array.from(categoryEls).map(a => a.textContent.trim());
+      const categoryId = CATEGORY_MAPPING[categories[2]] || 0;
+
+      const sellerHref = sellerLink?.getAttribute('href');
+      const sellerId = sellerHref ? sellerHref.split('/')[2] : null;
+
+      const data = {
+        productId,
+        productName: titleEl?.textContent.trim() || null,
+        price: priceEl?.textContent.trim() || null,
+        status: valueEls[0]?.textContent.trim() || null,
+        deliveryFee: valueEls[1]?.querySelector('span')?.textContent.trim() || valueEls[1]?.textContent.trim() || null,
+        description: descEl?.textContent.trim() || null,
+        categories,
+        categoryId,
+        sellerName: sellerLink?.textContent.trim() || null,
+        sellerId,
+        memberId: 1
+      };
+
+      console.log('Extracted product info:', data);
+      resolve(data);
+    }).catch(error => {
+      console.error('Error waiting for elements:', error);
+      resolve({
+        productId,
+        productName: null,
+        price: null,
+        status: null,
+        deliveryFee: null,
+        description: null,
+        categories: [],
+        categoryId: 0,
+        sellerName: null,
+        sellerId: null,
+        memberId: 1
+      });
+    });
   });
 }
 
+// 스토리지 관련 함수
+async function storeProductInfo(productInfo) {
+  console.log('Attempting to store product info');
+  
+  if (!productInfo.productId || !productInfo.productName || !productInfo.price) {
+    console.log('Waiting for product info to be fully loaded...');
+    const updatedInfo = await getProductInfo();
+    return storeProductInfo(updatedInfo);
+  }
+  
+  // 이미 저장된 상품인지 확인
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['productStore', 'lastStoredProductId'], function(result) {
+      const { productStore = {}, lastStoredProductId } = result;
+      
+      // 이미 저장된 상품이고 정보가 동일한 경우 저장하지 않음
+      if (lastStoredProductId === productInfo.productId) {
+        const existingProduct = productStore[productInfo.productId];
+        if (existingProduct && 
+            existingProduct.productName === productInfo.productName &&
+            existingProduct.price === productInfo.price) {
+          console.log('Product info already stored and unchanged, skipping...');
+          resolve();
+          return;
+        }
+      }
+      
+      // 새로운 상품 정보 추가
+      const updatedProductStore = {
+        ...productStore,
+        [productInfo.productId]: productInfo
+      };
+      
+      // storage에 저장
+      chrome.storage.local.set({ 
+        productStore: updatedProductStore,
+        lastStoredProductId: productInfo.productId
+      }, async function() {
+        console.log('Product info stored:', productInfo);
+        console.log('Current product store:', updatedProductStore);
+        console.log('Sending chatroom request...');
+        try {
+          await sendChatroomRequest(productInfo);
+        } catch (error) {
+          console.error('Failed to send chatroom request:', error);
+        }
+        resolve();
+      });
+    });
+  });
+}
+
+// 채팅 페이지 관련 함수
+function extractProductId() {
+  const sellerId = window.location.pathname.split('/').pop();
+  console.log('Found seller ID from URL:', sellerId);
+
+  if (!sellerId) {
+    console.log('No seller ID found in URL');
+    return null;
+  }
+
+  chrome.storage.local.get(['productStore'], async function(result) {
+    const productStore = result.productStore || {};
+    const matchedProduct = Object.values(productStore).find(product => 
+      product.sellerId === sellerId
+    );
+    
+    if (matchedProduct) {
+      console.log('Found matching product for seller:', matchedProduct);
+      try {
+        const response = await sendChatroomRequest(matchedProduct);
+        if (response.isSuccess) {
+          const suggestedNames = response.result.suggestedProductNames || [];
+          console.log('💡 추천 상품명:', suggestedNames);
+        }
+      } catch (error) {
+        console.error('Failed to send chatroom request:', error);
+      }
+      
+      chrome.runtime.sendMessage({
+        type: MESSAGE_TYPES.UPDATE_PRODUCT_INFO,
+        productInfo: matchedProduct
+      });
+    } else {
+      console.log('No matching product found for seller ID:', sellerId);
+    }
+  });
+
+  return null;
+}
+
+// URL 변경 감지
+function watchUrlChanges(callback) {
+  let lastUrl = window.location.href;
+  let isProcessing = false; // URL 변경 처리 중 플래그
+  
+  const observer = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl && !isProcessing) {
+      isProcessing = true;
+      lastUrl = currentUrl;
+      callback(currentUrl);
+      // 1초 후에 다시 URL 변경을 감지할 수 있도록 플래그 초기화
+      setTimeout(() => {
+        isProcessing = false;
+      }, 1000);
+    }
+  });
+
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener('DOMContentLoaded', function onBodyReady() {
+      if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+        document.removeEventListener('DOMContentLoaded', onBodyReady);
+      }
+    });
+  }
+
+  window.addEventListener('popstate', () => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl && !isProcessing) {
+      isProcessing = true;
+      lastUrl = currentUrl;
+      callback(currentUrl);
+      setTimeout(() => {
+        isProcessing = false;
+      }, 1000);
+    }
+  });
+}
+
+// 메인 실행 함수
 (() => {
   const url = window.location.href;
   console.log('Current URL:', url);
   
-  // URL 패턴 수정
-  const isTalkPage = /^https:\/\/m\.bunjang\.co\.kr\/talk2\/user\/\d+/.test(url) || 
-                    /^https:\/\/talk\.bunjang\.co\.kr\/?$/.test(url);
-  const isProductPage = /^https:\/\/m\.bunjang\.co\.kr\/products\/\d+/.test(url);
+  const isTalkPage = URL_PATTERNS.TALK_PAGE.test(url) || URL_PATTERNS.TALK_PAGE_ALT.test(url);
+  const isProductPage = URL_PATTERNS.PRODUCT_PAGE.test(url);
   
   console.log('Page type detection:', {
     isTalkPage,
     isProductPage,
     url,
-    matchedTalkPattern: /^https:\/\/m\.bunjang\.co\.kr\/talk2\/user\/\d+/.test(url),
-    matchedTalkPattern2: /^https:\/\/talk\.bunjang\.co\.kr\/?$/.test(url),
-    matchedProductPattern: /^https:\/\/m\.bunjang\.co\.kr\/products\/\d+/.test(url)
+    matchedTalkPattern: URL_PATTERNS.TALK_PAGE.test(url),
+    matchedTalkPattern2: URL_PATTERNS.TALK_PAGE_ALT.test(url),
+    matchedProductPattern: URL_PATTERNS.PRODUCT_PAGE.test(url)
   });
 
-  // 현재 탭이 활성화되어 있는지 확인하는 함수
-  async function checkIfTabActive() {
-    try {
-      const response = await sendMessageWithRetry({ type: MESSAGE_TYPES.CHECK_TAB_ACTIVE });
-      return response && response.isActive;
-    } catch (error) {
-      console.error('Failed to check tab active status:', error);
-      return false;
-    }
-  }
-
-  // 메시지 리스너 추가
+  // 메시지 리스너
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Content script received message:', message);
     
     if (message.type === MESSAGE_TYPES.GET_PRODUCT_INFO) {
       if (isTalkPage) {
-        // 채팅 페이지에서는 상품 정보 조회만 수행
         extractProductId();
         sendResponse({ success: true });
       } else if (isProductPage) {
-        // 상품 페이지에서만 상품 정보 저장 수행
-        const productInfo = getProductInfo();
-        sendResponse({ productInfo });
+        getProductInfo().then(productInfo => {
+          console.log('Sending product info to sidepanel:', productInfo);
+          sendResponse({ productInfo });
+        }).catch(error => {
+          console.error('Error getting product info:', error);
+          sendResponse({ error: error.message });
+        });
+        return true; // 비동기 응답을 위해 true 반환
       }
     }
     
-    return true; // 비동기 응답을 위해 true 반환
+    return true;
   });
 
   if (!isTalkPage && !isProductPage) {
@@ -111,304 +344,28 @@ function sendChatroomRequest(productInfo) {
     return;
   }
 
+  // URL 변경 감지 설정
+  watchUrlChanges((newUrl) => {
+    const isNowTalkPage = URL_PATTERNS.TALK_PAGE.test(newUrl);
+    const isNowProductPage = URL_PATTERNS.PRODUCT_PAGE.test(newUrl);
+
+    if (isNowTalkPage) {
+      console.log('Switched to Talk Page, skipping product info store.');
+    } else if (isNowProductPage) {
+      console.log('Switched to Product Page, triggering product info store.');
+      getProductInfo().then(productInfo => {
+        storeProductInfo(productInfo);
+      });
+    }
+  });
+
+  // 페이지 타입별 초기화
   if (isTalkPage) {
     console.log('Talk page loaded, attempting to find product name');
-    // 채팅 페이지에서는 상품 정보 저장 시도하지 않음
-    function extractProductId() {
-      // URL에서 판매자 ID 추출
-      const sellerId = window.location.pathname.split('/').pop();
-      console.log('Found seller ID from URL:', sellerId);
-
-      if (!sellerId) {
-        console.log('No seller ID found in URL');
-        return null;
-      }
-
-      // storage에서 해당 판매자의 상품 찾기
-      chrome.storage.local.get(['productStore'], function(result) {
-        const productStore = result.productStore || {};
-        const matchedProduct = Object.values(productStore).find(product => 
-          product.sellerId === sellerId
-        );
-        
-        if (matchedProduct) {
-          console.log('Found matching product for seller:', matchedProduct);
-          // 사이드패널에 상품 정보 전달
-           // 👇 여기 아래에 추가!
-          fetch('http://13.125.148.205:8080/api/chatroom', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              memberId: matchedProduct.memberId ?? 0,
-              chatRoomTitle: matchedProduct.productName ?? '제목 없음',
-              content: matchedProduct.description ?? '',
-              category: matchedProduct.categoryId ?? 0,
-              deliveryFee: matchedProduct.deliveryFee ?? '',
-              seller: Number(matchedProduct.sellerId) || 0,
-              price: matchedProduct.price ?? '',
-              status: matchedProduct.status ?? ''
-            })
-          })
-          .then(res => res.json())
-          .then(data => {
-            console.log('✅ 채팅 생성 응답:', data);
-            if (data.isSuccess) {
-              const suggestedNames = data.result.suggestedProductNames || [];
-              console.log('💡 추천 상품명:', suggestedNames);
-            }
-          })
-          .catch(err => {
-            console.error('❗ API 호출 실패:', err);
-          });
-          chrome.runtime.sendMessage({
-            type: MESSAGE_TYPES.UPDATE_PRODUCT_INFO,
-            productInfo: matchedProduct
-          });
-        } else {
-          console.log('No matching product found for seller ID:', sellerId);
-        }
-      });
-
-      return null;
-    }
-
-    // 초기화
-    function initialize() {
-      observeChatMessages();
-      extractProductId(); // 초기 로드 시에도 실행
-    }
-
-    // 페이지 로드 완료 후 초기화
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-      initialize();
-    }
-
-    document.addEventListener('mouseup', () => {
-      const selection = window.getSelection();
-      const selectedText = selection ? selection.toString().trim() : '';
-      if (selectedText.length > 0) {
-        chrome.runtime.sendMessage({ type: MESSAGE_TYPES.SELECTED_TEXT, text: selectedText });
-      }
-    });
-
-    // 중요 키워드 목록
-    const KEYWORDS = {
-      '가격': ['가격', '원', '만원', '천원', '비용', '금액', '가격협의', '가격제안'],
-      '하자': ['하자', '흠집', '스크래치', '기스', '파손', '고장', '불량'],
-      '배송': ['배송', '택배', '배달', '직거래', '만나서', '수령'],
-      '상태': ['상태', '새상품', '중고', '사용감', '깨끗', '깨끗함'],
-      '교환': ['교환', '반품', '환불', '취소']
-    };
-
-    // 채팅 메시지 모니터링
-    function observeChatMessages() {
-      const chatContainer = document.querySelector('.chat-messages-container');
-      if (!chatContainer) return;
-
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length) {
-            mutation.addedNodes.forEach((node) => {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                const messageElements = node.querySelectorAll('.message-content');
-                messageElements.forEach(element => {
-                  if (!element.dataset.kakasHighlighted) {
-                    const originalText = element.innerHTML;
-                    const highlightedText = originalText;
-                    if (highlightedText !== originalText) {
-                      element.innerHTML = highlightedText;
-                      element.dataset.kakasHighlighted = 'true';
-                    }
-                  }
-                });
-              }
-            });
-          }
-        });
-      });
-
-      observer.observe(chatContainer, {
-        childList: true,
-        subtree: true
-      });
-    }
+    extractProductId();
   } else if (isProductPage) {
-    // 상품 페이지에서만 실행되는 코드
     console.log('Product page loaded, starting to store product info');
-    
-    // 상품 정보를 가져오는 함수
-    function getProductInfo() {
-      console.log('Getting product info from product page');
-      // ✅ 0. 상품 ID 추출
-      const pathParts = window.location.pathname.split('/');
-      const productId = pathParts[2] || null;
-
-      // ✅ 1. 상품명
-      const titleEl = document.querySelector(
-        '.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg'
-      );
-      const productName = titleEl ? titleEl.textContent.trim() : null;
-
-      // ✅ 2. 가격
-      const priceEl = document.querySelector(
-        '.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp'
-      );
-      const price = priceEl ? priceEl.textContent.trim() : null;
-
-      // ✅ 3. 상품상태
-      const valueEls = document.querySelectorAll(
-        '.ProductSummarystyle__Value-sc-oxz0oy-21.eLyjky'
-      );
-      const status = valueEls[0] ? valueEls[0].textContent.trim() : null;
-
-      // ✅ 4. 배송비
-      let deliveryFee = null;
-      if (valueEls[1]) {
-        const span = valueEls[1].querySelector('span');
-        deliveryFee = span ? span.textContent.trim() : valueEls[1].textContent.trim();
-      }
-
-      // ✅ 5. 상품설명
-      const descEl = document.querySelector(
-        '.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p'
-      );
-      const description = descEl ? descEl.textContent.trim() : null;
-
-      // ✅ 6. 카테고리
-      const categoryEls = document.querySelectorAll(
-        '.ProductInfostyle__Category-sc-ql55c8-8.EVvbD a'
-      );
-      const categories = Array.from(categoryEls).map(a => a.textContent.trim());
-
-      // ✅ 6-1. 카테고리 id
-      const categoryId = 0;
-      if (categories[2] == '닌텐도/NDS/Wii') {
-        categoryId = 1;
-      } else if (categories[2] == '소니/플레이스테이션') {
-        categoryId = 2;
-      } else if (categories[2] == 'XBOX') {
-        categoryId = 3;
-      } else if (categories[2] == 'PC게임') {
-        categoryId = 4;
-      } else if (categories[2] == '기타 게임/타이틀') {
-        categoryId = 5;
-      }
-
-      // ✅ 7. 판매자 이름 및 ID
-      const sellerLink = document.querySelector(
-        'a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL'
-      );
-      const sellerName = sellerLink ? sellerLink.textContent.trim() : null;
-      const sellerHref = sellerLink ? sellerLink.getAttribute('href') : null;
-      const sellerId = sellerHref ? sellerHref.split('/')[2] : null;
-
-      // ✅ 8. 사용자 ID 목업
-      const memberId = 1;
-
-      // ✅ 결과 객체 생성
-      const data = {
-        productId,
-        productName,
-        price,
-        status,
-        deliveryFee,
-        description,
-        categories,
-        categoryId,
-        sellerName,
-        sellerId,
-        memberId
-      };
-
-      console.log('Extracted product info:', data);
-      return data;
-    }
-
-    // 페이지 로드 완료 후 상품 정보 저장
-    function storeProductInfo(productInfo) {
-      console.log('Attempting to store product info');
-      
-      // 필수 정보가 모두 있는지 확인
-      if (!productInfo.productId || !productInfo.productName || !productInfo.price) {
-        console.log('Waiting for product info to be fully loaded...');
-        setTimeout(() => storeProductInfo(productInfo), 1000); // 1초 후 다시 시도
-        return;
-      }
-      
-      // storage에서 기존 상품 정보 가져오기
-      chrome.storage.local.get(['productStore'], function(result) {
-        let productStore = result.productStore || {};
-        
-        // 새로운 상품 정보 추가
-        productStore = {
-          ...productStore,
-          [productInfo.productId]: productInfo
-        };
-        
-        // storage에 저장
-        chrome.storage.local.set({ productStore }, function() {
-          console.log('Product info stored:', productInfo);
-          console.log('Current product store:', productStore);
-          console.log('Sending chatroom request...');
-          sendChatroomRequest(productInfo);
-        });
-      });
-    }
-
-    // URL 변경 감지 로직
-    function watchUrlChanges(callback) {
-      let lastUrl = window.location.href;
-      if (!(document.body instanceof Node)) return;
-      const observer = new MutationObserver(() => {
-        const currentUrl = window.location.href;
-        if (currentUrl !== lastUrl) {
-          lastUrl = currentUrl;
-          callback(currentUrl);
-        }
-      });
-
-      // document.body가 없는 경우를 처리
-      if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true });
-      } else {
-        // body가 아직 없으면 DOMContentLoaded 후 시도
-        document.addEventListener('DOMContentLoaded', function onBodyReady() {
-          if (document.body) {
-            observer.observe(document.body, { childList: true, subtree: true });
-            document.removeEventListener('DOMContentLoaded', onBodyReady);
-          }
-        });
-      }
-
-      window.addEventListener('popstate', () => {
-        const currentUrl = window.location.href;
-        if (currentUrl !== lastUrl) {
-          lastUrl = currentUrl;
-          callback(currentUrl);
-        }
-      });
-    }
-
-    watchUrlChanges((newUrl) => {
-      const isNowTalkPage = /^https:\/\/m\.bunjang\.co\.kr\/talk2\/user\/\d+/.test(newUrl);
-      const isNowProductPage = /^https:\/\/m\.bunjang\.co\.kr\/products\/\d+/.test(newUrl);
-
-      if (isNowTalkPage) {
-        console.log('Switched to Talk Page, skipping product info store.');
-      } else if (isNowProductPage) {
-        console.log('Switched to Product Page, triggering product info store.');
-        const productInfo = getProductInfo();
-        storeProductInfo(productInfo);
-      }
-    });
-
-    // 페이지 로드 완료 후 상품 정보 저장 시도
-    window.addEventListener('load', () => {
-      const productInfo = getProductInfo();
+    getProductInfo().then(productInfo => {
       storeProductInfo(productInfo);
     });
   }
