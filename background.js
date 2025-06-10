@@ -3,7 +3,8 @@ const MESSAGE_TYPES = {
   SELECTED_TEXT: 'SELECTED_TEXT',
   UPDATE_PRODUCT_INFO: 'UPDATE_PRODUCT_INFO',
   GET_PRODUCT_BY_NAME: 'GET_PRODUCT_BY_NAME',
-  CHECK_TAB_ACTIVE: 'CHECK_TAB_ACTIVE'
+  CHECK_TAB_ACTIVE: 'CHECK_TAB_ACTIVE',
+  CHAT_DATA: 'CHAT_DATA'
 };
 
 // 확장 프로그램 아이콘 클릭 시 사이드탭 열기
@@ -52,6 +53,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case MESSAGE_TYPES.CHECK_TAB_ACTIVE:
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           sendResponse({ isActive: tabs[0]?.id === sender.tab?.id });
+        });
+        break;
+
+      case MESSAGE_TYPES.CHAT_DATA:
+        console.log('Received chat data:', msg.chatData);
+        // 사이드패널로 채팅 데이터 전송
+        chrome.runtime.sendMessage({
+          type: MESSAGE_TYPES.CHAT_DATA,
+          chatData: msg.chatData,
+          timestamp: Date.now()
         });
         break;
     }

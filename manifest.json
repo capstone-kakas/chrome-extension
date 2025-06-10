@@ -14,21 +14,24 @@
       "storage"
     ],
     "host_permissions": [
-      "https://*.bunjang.co.kr/*",
-      "<all_urls>",
-      "http://13.125.148.205:8080/*"
-    ],
+    "*://m.bunjang.co.kr/*",
+    "*://talk.bunjang.co.kr/*",
+    "*://*.bunjang.co.kr/*",
+    "https://13.125.148.205:443/*"
+  ],
     "side_panel": {
       "default_path": "sidepanel.html"
     },
     "content_scripts": [
       {
         "matches": [
-          "https://m.bunjang.co.kr/*",
-          "https://talk.bunjang.co.kr/*"
-        ],
+          "*://m.bunjang.co.kr/*",
+          "*://talk.bunjang.co.kr/*",
+          "*://*.bunjang.co.kr/*"
+        ], 
         "js": ["content_script.js"],
-        "run_at": "document_end"
+        "all_frames": true,
+        "run_at": "document_idle"
       }
     ],
     "action": {
