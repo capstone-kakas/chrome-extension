@@ -1,22 +1,20 @@
 {
     "manifest_version": 3,
-    "name": "까까스13",
-    "version": "1.0",
-    "description": "중고 거래 도우미",
+    "name": "Bunjang Chat Helper1",
+    "version": "1.0.1",
+    "description": "Bunjang chat helper extension",
     "icons": {
         "16": "icons/icon16.png",
         "32": "icons/icon32.png"
     },
     "permissions": [
-      "sidePanel",
-      "scripting",
+      "storage",
       "tabs",
-      "storage"
+      "sidePanel"
     ],
     "host_permissions": [
-      "https://*.bunjang.co.kr/*",
-      "<all_urls>",
-      "http://13.125.148.205:8080/*"
+      "https://m.bunjang.co.kr/*",
+      "https://talk.bunjang.co.kr/*"
     ],
     "side_panel": {
       "default_path": "sidepanel.html"
@@ -24,15 +22,17 @@
     "content_scripts": [
       {
         "matches": [
-          "https://m.bunjang.co.kr/*",
-          "https://talk.bunjang.co.kr/*"
+          "https://m.bunjang.co.kr/products/*",
+          "https://m.bunjang.co.kr/talk2/user/*",
+          "https://talk.bunjang.co.kr/*",
+          "https://talk.bunjang.co.kr/talk2/user/*"
         ],
         "js": ["content_script.js"],
         "run_at": "document_end"
       }
     ],
     "action": {
-      "default_title": "채팅 사이드탭 열기",
+      "default_title": "Bunjang Chat Helper1",
       "default_icon": {
         "16": "icons/icon16.png",
         "32": "icons/icon32.png"
