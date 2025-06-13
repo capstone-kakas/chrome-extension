@@ -135,7 +135,8 @@ function getProductInfo() {
       waitForElement('.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg'),
       waitForElement('.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp'),
       waitForElement('.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p'),
-      waitForElement('a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL')
+      waitForElement('a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL'),
+      waitForElement('.ProductSummarystyle__Status-sc-oxz0oy-11.fMQseI')
     ]).then(() => {
       const titleEl = document.querySelector('.ProductSummarystyle__Name-sc-oxz0oy-3.dZBHcg');
       const priceEl = document.querySelector('.ProductSummarystyle__Price-sc-oxz0oy-5.cspsrp');
@@ -143,12 +144,18 @@ function getProductInfo() {
       const descEl = document.querySelector('.ProductInfostyle__DescriptionContent-sc-ql55c8-3.eJCiaL p');
       const categoryEls = document.querySelectorAll('.ProductInfostyle__Category-sc-ql55c8-8.EVvbD a');
       const sellerLink = document.querySelector('a.ProductSellerstyle__Name-sc-1qnzvgu-7.cCIWgL');
+      const statusEls = document.querySelectorAll('.ProductSummarystyle__Status-sc-oxz0oy-11.fMQseI');
 
       const categories = Array.from(categoryEls).map(a => a.textContent.trim());
       const categoryId = CATEGORY_MAPPING[categories[2]] || 0;
 
       const sellerHref = sellerLink?.getAttribute('href');
       const sellerId = sellerHref ? sellerHref.split('/')[2] : null;
+
+      // 관심도 정보 추출
+      const wishCount = statusEls[0]?.textContent.trim() || '0';
+      const viewCount = statusEls[1]?.textContent.trim() || '0';
+      const timeElapsed = statusEls[2]?.textContent.trim() || '0';
 
       const data = {
         productId,
@@ -161,7 +168,10 @@ function getProductInfo() {
         categoryId,
         sellerName: sellerLink?.textContent.trim() || null,
         sellerId,
-        memberId: 1
+        memberId: 1,
+        wishCount: parseInt(wishCount.replace(/[^0-9]/g, '')) || 0,
+        viewCount: parseInt(viewCount.replace(/[^0-9]/g, '')) || 0,
+        timeElapsed
       };
 
       console.log('Extracted product info:', data);
@@ -179,7 +189,10 @@ function getProductInfo() {
         categoryId: 0,
         sellerName: null,
         sellerId: null,
-        memberId: 1
+        memberId: 1,
+        wishCount: 0,
+        viewCount: 0,
+        timeElapsed: '0'
       });
     });
   });
@@ -322,7 +335,7 @@ function watchUrlChanges(callback) {
 function getChatData() {
   // 캐시된 결과를 저장 (중복 호출 방지)
   if (getChatData._lastCall && Date.now() - getChatData._lastCall < 500) {
-    return getChatData._lastResult || { messages: [], productInfo: [] };
+    return getChatData._lastResult || { messages: [], productInfo: [], productId: null };
   }
   
   // iframe 내부의 채팅 데이터를 가져오는 함수
@@ -335,8 +348,23 @@ function getChatData() {
 
     // 채팅 블록이 없으면 빈 결과 반환
     if (chatBlocks.length === 0) {
-      return { messages: [], productInfo: [] };
+      return { messages: [], productInfo: [], productId: null };
     }
+
+    // productId 추출
+    const sellerId = window.location.pathname.split('/').pop();
+    let productId = null;
+
+    // storage에서 productId 찾기 (동기적으로 처리)
+    const productStore = chrome.storage.local.get(['productStore'], function(result) {
+      const store = result.productStore || {};
+      const matchedProduct = Object.values(store).find(product => 
+        product.sellerId === sellerId
+      );
+      if (matchedProduct) {
+        productId = matchedProduct.productId;
+      }
+    });
 
     chatBlocks.forEach(chatBlock => {
       try {
@@ -358,7 +386,7 @@ function getChatData() {
           if (time) lastTime = time; // 새로운 시간 등장 시 갱신
           messages.push({
             text: messageElem.innerText.trim(),
-            sender: isMine ? 'me' : 'other',
+            sender: isMine ? 'buyer' : 'seller',
             time: appliedTime
           });
           return;
@@ -379,11 +407,11 @@ function getChatData() {
       }
     });
 
-    return { messages, productInfo };
+    return { messages, productInfo, productId };
   }
 
   try {
-    let result = { messages: [], productInfo: [] };
+    let result = { messages: [], productInfo: [], productId: null };
     
     // 현재 페이지가 iframe 내부인지 확인
     if (window !== window.top) {
@@ -444,7 +472,7 @@ function getChatData() {
     
   } catch (error) {
     logError('Error in getChatData:', error);
-    return { messages: [], productInfo: [] };
+    return { messages: [], productInfo: [], productId: null };
   }
 }
 

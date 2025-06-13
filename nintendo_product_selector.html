@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nintendo Switch 제품 선택</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 360px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e60012, #ff6b6b, #4ecdc4);
+        }
+
+        .logo-section {
+            height: 62px;
+            padding-bottom: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 125px;
+            height: 46px;
+            background: linear-gradient(45deg, #e60012, #ff4757);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: -0.5px;
+            box-shadow: 0 4px 15px rgba(230, 0, 18, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(230, 0, 18, 0.4);
+        }
+
+        .title {
+            text-align: center;
+            color: #1E1E1E;
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 32px;
+            margin: 20px 0 5px 0;
+            background: linear-gradient(45deg, #1E1E1E, #4a4a4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #757575;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 32px;
+            margin-bottom: 30px;
+        }
+
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .product-item {
+            background: white;
+            box-shadow: 0px 2px 8px rgba(73, 80, 87, 0.06);
+            border-radius: 12px;
+            border: 1px solid #F1F3F5;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .product-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(73, 80, 87, 0.15);
+            border-color: #e60012;
+        }
+
+        .product-item:hover::before {
+            left: 100%;
+        }
+
+        .product-item:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(73, 80, 87, 0.12);
+        }
+
+        .product-content {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-name {
+            color: #303030;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 24px;
+            flex: 1;
+            transition: color 0.3s ease;
+        }
+
+        .product-item:hover .product-name {
+            color: #e60012;
+        }
+
+        .arrow-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .product-item:hover .arrow-icon {
+            transform: translateX(5px);
+        }
+
+        .arrow-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #5A5A5A;
+            border-right: 2px solid #5A5A5A;
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+
+        .product-item:hover .arrow-icon::after {
+            border-color: #e60012;
+        }
+
+        .search-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .search-section:hover {
+            background: rgba(230, 0, 18, 0.05);
+        }
+
+        .search-text {
+            color: #5A5A5A;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .search-section:hover .search-text {
+            color: #e60012;
+        }
+
+        .search-arrow {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .search-section:hover .search-arrow {
+            transform: translateX(3px);
+        }
+
+        .search-arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #5A5A5A;
+            border-right: 2px solid #5A5A5A;
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+
+        .search-section:hover .search-arrow::after {
+            border-color: #e60012;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            animation: modalShow 0.3s ease forwards;
+        }
+
+        .modal h3 {
+            color: #1E1E1E;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            color: #757575;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-button {
+            background: linear-gradient(45deg, #e60012, #ff4757);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 0, 18, 0.3);
+        }
+
+        .search-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #F1F3F5;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #e60012;
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: #f8f9fa;
+            color: #5A5A5A;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #e9ecef;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalShow {
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <div class="logo">NINTENDO</div>
+        </div>
+        
+        <div class="title">
+            찾고계신 상품을<br/>아래에서 선택해주세요
+        </div>
+        
+        <div class="subtitle">맞춤 정보를 제공해드려요</div>
+        
+        <div class="product-list">
+            <div class="product-item" data-product="Nintendo 닌텐도 스위치 OLED">
+                <div class="product-content">
+                    <div class="product-name">Nintendo 닌텐도 스위치 OLED</div>
+                    <div class="arrow-icon"></div>
+                </div>
+            </div>
+            
+            <div class="product-item" data-product="Nintendo 닌텐도 스위치 1세대">
+                <div class="product-content">
+                    <div class="product-name">Nintendo 닌텐도 스위치 1세대</div>
+                    <div class="arrow-icon"></div>
+                </div>
+            </div>
+            
+            <div class="product-item" data-product="Nintendo 닌텐도 스위치 조이콘">
+                <div class="product-content">
+                    <div class="product-name">Nintendo 닌텐도 스위치 조이콘</div>
+                    <div class="arrow-icon"></div>
+                </div>
+            </div>
+            
+            <div class="product-item" data-product="Nintendo 닌텐도 스위치 모여봐요 동물의 숲 세트">
+                <div class="product-content">
+                    <div class="product-name">Nintendo 닌텐도 스위치 모여봐요 동물의 숲 세트</div>
+                    <div class="arrow-icon"></div>
+                </div>
+            </div>
+            
+            <div class="product-item" data-product="Nintendo 닌텐도 스위치 충전기">
+                <div class="product-content">
+                    <div class="product-name">Nintendo 닌텐도 스위치 충전기</div>
+                    <div class="arrow-icon"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="search-section" id="searchBtn">
+            <div class="search-text">직접 검색하기</div>
+            <div class="search-arrow"></div>
+        </div>
+    </div>
+
+    <!-- Product Selection Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">제품을 선택하셨습니다</h3>
+            <p id="modalText">선택하신 제품에 대한 맞춤 정보를 준비하고 있습니다.</p>
+            <button class="modal-button" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal" id="searchModal">
+        <div class="search-modal">
+            <h3 style="margin-bottom: 20px; color: #1E1E1E;">제품 직접 검색</h3>
+            <input type="text" class="search-input" placeholder="찾으시는 Nintendo 제품을 입력하세요..." id="searchInput">
+            <div class="search-buttons">
+                <button class="btn-cancel" onclick="closeSearchModal()">취소</button>
+                <button class="modal-button" onclick="performSearch()">검색</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Product selection functionality
+        document.querySelectorAll('.product-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const productName = this.dataset.product;
+                showProductModal(productName);
+            });
+        });
+
+        function showProductModal(productName) {
+            const modal = document.getElementById('productModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+            
+            modalTitle.textContent = productName;
+            modalText.textContent = `${productName}에 대한 맞춤 정보를 준비하고 있습니다.`;
+            
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('show');
+        }
+
+        // Search functionality
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            document.getElementById('searchModal').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('searchInput').focus();
+            }, 300);
+        });
+
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('show');
+            document.getElementById('searchInput').value = '';
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                closeSearchModal();
+                showProductModal(`검색: ${searchTerm}`);
+            }
+        }
+
+        // Enter key support for search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add pulse effect to logo periodically
+            setInterval(() => {
+                const logo = document.querySelector('.logo');
+                logo.classList.add('pulse');
+                setTimeout(() => {
+                    logo.classList.remove('pulse');
+                }, 2000);
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

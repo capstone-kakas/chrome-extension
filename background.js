@@ -7,6 +7,12 @@ const MESSAGE_TYPES = {
   CHAT_DATA: 'CHAT_DATA'
 };
 
+// 자동으로 사이드 패널을 열어야 하는 도메인 목록
+const AUTO_OPEN_DOMAINS = [
+  'm.bunjang.co.kr',
+  'bunjang.co.kr'
+];
+
 // 확장 프로그램 아이콘 클릭 시 사이드탭 열기
 chrome.action.onClicked.addListener((tab) => {
   chrome.sidePanel.open({ windowId: tab.windowId });
@@ -71,4 +77,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   
   return true; // 비동기 응답을 위해 true 반환
+});
+
+// 탭이 업데이트될 때마다 체크
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    const url = new URL(tab.url);
+    if (AUTO_OPEN_DOMAINS.some(domain => url.hostname.includes(domain))) {
+      // 사이드 패널 열기
+      chrome.sidePanel.open({ windowId: tab.windowId });
+    }
+  }
+});
+
+// 확장 프로그램이 설치되거나 업데이트될 때
+chrome.runtime.onInstalled.addListener(() => {
+  // 사이드 패널 기본 설정
+  chrome.sidePanel.setOptions({
+    enabled: true,
+    path: 'sidepanel.html'
+  });
 }); 

@@ -11,10 +11,10 @@
         "128": "icons/icon128.png"
     },
     "permissions": [
-      "sidePanel",
-      "scripting",
+      "storage",
       "tabs",
-      "storage"
+      "sidePanel",
+      "scripting"
     ],
     "host_permissions": [
     "*://m.bunjang.co.kr/*",

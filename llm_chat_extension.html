@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 채팅 익스텐션</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 메인 익스텐션 컨텐츠 */
+        .main-content {
+            padding: 40px;
+            color: white;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .main-content.shifted {
+            transform: translateX(100%);
+        }
+
+        .main-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .main-content p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        /* 플로팅 버튼 */
+        .floating-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+
+        .floating-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .floating-button svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .floating-button.hidden {
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        /* 입력 패널 (하단 확장) */
+        .input-panel {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 340px;
+            height: 52px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.5);
+            outline: 1px #D9D9D9 solid;
+            outline-offset: -1px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+        }
+
+        .input-panel.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .input-panel.expand-to-chat {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            transform: translateY(0);
+            opacity: 1;
+            padding: 0;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .input-bar {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #333;
+            font-size: 14px;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-weight: 500;
+        }
+
+        .input-bar::placeholder {
+            color: #B3B3B3;
+        }
+
+        .input-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .input-icon::before {
+            content: '';
+            width: 16.67px;
+            height: 16.67px;
+            outline: 2px #5A5A5A solid;
+            outline-offset: -1px;
+            border-radius: 2px;
+            background: #5A5A5A;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 2L13.09 8.26L19 7L14.74 12L19 17L13.09 15.74L12 22L10.91 15.74L5 17L9.26 12L5 7L10.91 8.26L12 2Z' fill='currentColor'/%3E%3C/svg%3E") center/contain no-repeat;
+        }
+
+        .input-icon:hover::before {
+            background: #333;
+        }
+
+        /* 기존 스타일들을 숨김 처리 */
+        .input-header,
+        .input-title,
+        .close-btn,
+        .input-content,
+        .input-field,
+        .send-btn {
+            display: none;
+        }
+
+        /* 채팅으로 확장될 때만 표시 */
+        .input-panel.expand-to-chat .input-header,
+        .input-panel.expand-to-chat .input-title,
+        .input-panel.expand-to-chat .close-btn,
+        .input-panel.expand-to-chat .input-content,
+        .input-panel.expand-to-chat .input-field,
+        .input-panel.expand-to-chat .send-btn {
+            display: block;
+        }
+
+        .input-panel.expand-to-chat .input-bar,
+        .input-panel.expand-to-chat .input-icon {
+            display: none;
+        }
+
+        .input-panel.expand-to-chat {
+            display: block;
+            padding: 0;
+        }
+
+        .input-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .input-content {
+            padding: 24px;
+        }
+
+        .input-field {
+            width: 100%;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 1rem;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        /* 채팅 화면 */
+        .chat-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-container.active {
+            display: flex;
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .message.assistant .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e1e5e9;
+            border-bottom-left-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-input-container {
+            padding: 20px 24px;
+            background: white;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 1rem;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            max-height: 120px;
+        }
+
+        .chat-input:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .typing-indicator {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-dots {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            padding: 16px 20px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 반응형 */
+        @media (max-width: 480px) {
+            .input-panel {
+                right: 12px;
+                width: calc(100% - 24px);
+            }
+            
+            .floating-button {
+                bottom: 12px;
+                right: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 메인 익스텐션 컨텐츠 -->
+    <div class="main-content" id="mainContent">
+        <h1>익스텐션 메인 화면</h1>
+        <p>여기는 기존 익스텐션의 메인 컨텐츠 영역입니다. 우하단의 채팅 버튼을 클릭하여 AI 어시스턴트와 대화해보세요.</p>
+        <p>플로팅 버튼 → 입력 패널 → 전체 채팅 화면으로 자연스럽게 전환됩니다.</p>
+    </div>
+
+    <!-- 플로팅 버튼 -->
+    <button class="floating-button" id="floatingBtn">
+        <svg viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        </svg>
+    </button>
+
+    <!-- 입력 패널 -->
+    <div class="input-panel" id="inputPanel">
+        <!-- 실제 입력 가능한 input 필드 -->
+        <input 
+            type="text" 
+            class="input-bar" 
+            id="inputBar" 
+            placeholder="무엇이든 물어보세요"
+        />
+        <div class="input-icon" id="inputIcon"></div>
+        
+        <!-- 확장 시 표시되는 기존 컨텐츠 -->
+        <div class="input-header">
+            <div class="input-title">AI 어시스턴트</div>
+            <button class="close-btn" id="closeInputBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="input-content">
+            <textarea 
+                class="input-field" 
+                id="initialInput" 
+                placeholder="궁금한 것을 물어보세요..."
+                rows="3"
+            ></textarea>
+            <button class="send-btn" id="initialSendBtn">
+                메시지 보내기
+            </button>
+        </div>
+    </div>
+
+    <!-- 채팅 화면 -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <button class="back-btn" id="backBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                뒤로
+            </button>
+            <div class="chat-title">AI 어시스턴트</div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- 메시지들이 여기에 추가됩니다 -->
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="메시지를 입력하세요..."
+                    rows="1"
+                ></textarea>
+                <button class="chat-send-btn" id="chatSendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LLMChatExtension {
+            constructor() {
+                this.currentState = 'floating'; // floating, input, chat
+                this.messages = [];
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.mainContent = document.getElementById('mainContent');
+                this.floatingBtn = document.getElementById('floatingBtn');
+                this.inputPanel = document.getElementById('inputPanel');
+                this.inputBar = document.getElementById('inputBar');
+                this.inputIcon = document.getElementById('inputIcon');
+                this.chatContainer = document.getElementById('chatContainer');
+                this.initialInput = document.getElementById('initialInput');
+                this.initialSendBtn = document.getElementById('initialSendBtn');
+                this.closeInputBtn = document.getElementById('closeInputBtn');
+                this.backBtn = document.getElementById('backBtn');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.chatInput = document.getElementById('chatInput');
+                this.chatSendBtn = document.getElementById('chatSendBtn');
+                this.typingIndicator = document.getElementById('typingIndicator');
+            }
+
+            bindEvents() {
+                // 플로팅 버튼 클릭
+                this.floatingBtn.addEventListener('click', () => this.showInputPanel());
+                
+                // 입력 바에서 엔터 키 처리
+                this.inputBar.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.sendFromInputBar();
+                    }
+                });
+                
+                // 아이콘 클릭으로도 전송 가능
+                this.inputIcon.addEventListener('click', () => this.sendFromInputBar());
+                
+                // 입력 패널 닫기
+                this.closeInputBtn.addEventListener('click', () => this.hideInputPanel());
+                
+                // 초기 메시지 전송
+                this.initialSendBtn.addEventListener('click', () => this.sendInitialMessage());
+                this.initialInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendInitialMessage();
+                    }
+                });
+                
+                // 뒤로 가기
+                this.backBtn.addEventListener('click', () => this.goBack());
+                
+                // 채팅 메시지 전송
+                this.chatSendBtn.addEventListener('click', () => this.sendChatMessage());
+                this.chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendChatMessage();
+                    }
+                });
+
+                // 텍스트 영역 자동 높이 조절
+                this.chatInput.addEventListener('input', this.autoResize.bind(this));
+            }
+
+            sendFromInputBar() {
+                const message = this.inputBar.value.trim();
+                if (!message) return;
+
+                // 채팅 화면으로 바로 전환
+                this.expandToChat();
+                
+                // 메시지 추가
+                this.addMessage('user', message);
+                
+                // AI 응답 시뮬레이션
+                this.simulateAIResponse(message);
+                
+                this.inputBar.value = '';
+            }
+
+            showInputPanel() {
+                this.currentState = 'input';
+                this.floatingBtn.classList.add('hidden');
+                
+                setTimeout(() => {
+                    this.inputPanel.classList.add('show');
+                    this.initialInput.focus();
+                }, 150);
+            }
+
+            hideInputPanel() {
+                this.currentState = 'floating';
+                this.inputPanel.classList.remove('show');
+                
+                setTimeout(() => {
+                    this.floatingBtn.classList.remove('hidden');
+                    this.initialInput.value = '';
+                }, 400);
+            }
+
+            sendInitialMessage() {
+                const message = this.initialInput.value.trim();
+                if (!message) return;
+
+                // 채팅 화면으로 전환
+                this.expandToChat();
+                
+                // 메시지 추가
+                this.addMessage('user', message);
+                
+                // AI 응답 시뮬레이션
+                this.simulateAIResponse(message);
+                
+                this.initialInput.value = '';
+            }
+
+            expandToChat() {
+                this.currentState = 'chat';
+                this.inputPanel.classList.add('expand-to-chat');
+                this.mainContent.classList.add('shifted');
+                
+                setTimeout(() => {
+                    this.inputPanel.style.display = 'none';
+                    this.chatContainer.classList.add('active');
+                    this.chatInput.focus();
+                }, 400);
+            }
+
+            sendChatMessage() {
+                const message = this.chatInput.value.trim();
+                if (!message) return;
+
+                this.addMessage('user', message);
+                this.simulateAIResponse(message);
+                this.chatInput.value = '';
+                this.autoResize({ target: this.chatInput });
+            }
+
+            addMessage(type, content) {
+                this.messages.push({ type, content, timestamp: Date.now() });
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                bubbleDiv.textContent = content;
+                
+                messageDiv.appendChild(bubbleDiv);
+                this.chatMessages.appendChild(messageDiv);
+                
+                this.scrollToBottom();
+            }
+
+            simulateAIResponse(userMessage) {
+                // 타이핑 인디케이터 표시
+                this.typingIndicator.classList.add('show');
+                this.scrollToBottom();
+                
+                setTimeout(() => {
+                    this.typingIndicator.classList.remove('show');
+                    
+                    // 간단한 응답 생성 (실제로는 LLM API 호출)
+                    let response = this.generateResponse(userMessage);
+                    this.addMessage('assistant', response);
+                }, 1000 + Math.random() * 2000);
+            }
+
+            generateResponse(message) {
+                const responses = [
+                    "흥미로운 질문이네요! 이에 대해 더 자세히 알려드릴게요.",
+                    "좋은 포인트입니다. 이 주제에 대해 다음과 같이 설명할 수 있어요.",
+                    "네, 이해했습니다. 이 문제에 대한 해답을 찾아보겠습니다.",
+                    "훌륭한 질문이에요! 단계별로 설명해드리겠습니다.",
+                    "이 주제는 정말 중요한데요, 여러 관점에서 살펴볼 필요가 있습니다."
+                ];
+                
+                return responses[Math.floor(Math.random() * responses.length)] + 
+                       ` 당신이 물어보신 "${message}"에 대해서는 실제 LLM API를 연결하시면 더 정확한 답변을 받으실 수 있습니다.`;
+            }
+
+            goBack() {
+                this.currentState = 'floating';
+                this.chatContainer.classList.remove('active');
+                this.mainContent.classList.remove('shifted');
+                
+                setTimeout(() => {
+                    this.inputPanel.style.display = 'block';
+                    this.inputPanel.classList.remove('expand-to-chat', 'show');
+                    this.floatingBtn.classList.remove('hidden');
+                }, 400);
+            }
+
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            autoResize(event) {
+                const textarea = event.target;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            }
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new LLMChatExtension();
+        });
+    </script>
+</body>
+</html>

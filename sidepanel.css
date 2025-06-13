@@ -1,0 +1,218 @@
+/* 연결 상태 모달 스타일 */
+.connection-status-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+.connection-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.connection-status-message {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 연결 스피너 스타일 */
+.connection-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 1001;
+}
+
+/* 판매자 정보 스타일 */
+.seller-info {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #495057;
+    margin-top: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.seller-icon {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+/* 판매자 채팅 컨테이너 스타일 */
+.seller-chat-container {
+    margin: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.seller-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 12px 12px 0 0;
+}
+
+.seller-chat-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.seller-chat-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.seller-chat-toggle {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: white;
+    color: #495057;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.seller-chat-toggle:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+.seller-chat-content {
+    padding: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.seller-chat-message {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.seller-chat-bubble {
+    display: inline-block;
+    padding: 10px 14px;
+    background-color: #f1f3f5;
+    border-radius: 12px;
+    max-width: 85%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.seller-chat-text {
+    color: #212529;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.seller-chat-time {
+    font-size: 11px;
+    color: #868e96;
+    margin-top: 4px;
+    text-align: right;
+}
+
+.no-chat-message {
+    text-align: center;
+    color: #868e96;
+    padding: 20px;
+    font-size: 14px;
+}
+
+/* 채팅 메시지 영역 스타일 수정 */
+.chat-messages {
+    margin-top: 15px;
+    padding: 0 15px;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* 추천 질문 애니메이션 버튼 */
+.recommend-animated-btn {
+  background: #fff;
+  border: 1.5px solid #ffd54f;
+  color: #ff6b6b;
+  font-weight: 600;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.10);
+  transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), background 0.18s;
+  cursor: pointer;
+  outline: none;
+  will-change: transform, box-shadow, background;
+}
+.recommend-animated-btn:hover, .recommend-animated-btn:focus {
+  transform: scale(1.07);
+  background: #fffde7;
+  box-shadow: 0 8px 32px rgba(255, 193, 7, 0.18);
+}
+.recommend-animated-btn:active {
+  transform: scale(0.97);
+}
+
+#customToast {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(50,50,50,0.95);
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.source-highlight {
+    background: #fffbe7;
+    color: #ff9800;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: normal;
+    border-radius: 6px;
+    padding: 0 4px;
+    margin-left: 2px;
+} 
