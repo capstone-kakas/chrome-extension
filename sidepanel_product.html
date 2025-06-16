@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>까까스 - 상품 분석</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            min-width: 15vw;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            background: white;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+            position: relative;
+            overflow: hidden;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e60012, #ff6b6b, #4ecdc4);
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 8px;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #eee;
+        }
+
+        .content-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-top: 8px;
+        }
+
+        /* 스크롤바 스타일링 */
+        .content-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .content-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .content-container::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .search-bar {
+            background: white;
+            border: 1.5px solid #B2B2B2;
+            border-radius: 8px;
+            padding: 0 16px 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 48px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            cursor: text;
+            flex: 1;
+        }
+
+        .search-bar:hover {
+            border-color: #e60012;
+            box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.1);
+        }
+
+        .search-bar:focus-within {
+            border-color: #e60012;
+            box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.1);
+        }
+
+        .search-text {
+            color: #2C2C2C;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.32px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 90%;
+            border: none;
+            outline: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        .search-text::placeholder {
+            color: #B2B2B2;
+        }
+
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .search-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 15px;
+            height: 15px;
+            border: 2px solid #1E1E1E;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .current-product {
+            margin: 8px 0 16px 0;
+        }
+
+        .current-label {
+            color: black;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .product-title {
+            color: black;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .deal-section {
+            background: #FFEED6;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .deal-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 164, 37, 0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        .deal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .deal-title {
+            color: black;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+
+        .deal-arrow {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .deal-arrow:hover {
+            transform: translateX(3px);
+        }
+
+        .deal-arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #1E1E1E;
+            border-right: 2px solid #1E1E1E;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .price-bar-container {
+            margin: 20px 0;
+        }
+
+        .price-bar {
+            width: 100%;
+            height: 21px;
+            background: rgba(217, 217, 217, 0.87);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 4px 4px 7px rgba(0, 0, 0, 0.15) inset;
+        }
+
+        .price-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #FFA425, #ffb84d);
+            border-radius: 12px;
+            width: 49.2%;
+            position: relative;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fillAnimation 2s ease-out;
+        }
+
+        .price-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: slideShine 2s ease-out infinite;
+        }
+
+        .price-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .price-label {
+            color: black;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .current-price {
+            text-align: center;
+            color: black;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 16px;
+            padding: 8px;
+            background: rgba(255, 164, 37, 0.1);
+            border-radius: 8px;
+            border: 2px dashed #FFA425;
+            animation: priceGlow 2s ease-in-out infinite alternate;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 280px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card.expanded {
+            min-height: 200px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #e60012;
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .stat-title {
+            color: black;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stat-arrow {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card.expanded .stat-arrow {
+            transform: rotate(180deg);
+        }
+
+        .stat-arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #1E1E1E;
+            border-right: 2px solid #1E1E1E;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .price-circle {
+            width: 140px;
+            height: 90px;
+            margin: 4px auto 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .circle-bg {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .progress-circle {
+            width: 140px;
+            height: 140px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: rotate(-90deg);
+        }
+
+        .progress-bg {
+            fill: none;
+            stroke: #f0f0f0;
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        .progress-bar {
+            fill: none;
+            stroke: url(#priceGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 2s ease-in-out;
+        }
+
+        .circle-content {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .circle-percentage {
+            color: #1a1a1a;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .circle-label {
+            color: #666;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .price-details {
+            text-align: center;
+            margin-top: 4px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            border: 1px solid #eee;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.expanded .price-details {
+            opacity: 1;
+            height: auto;
+            margin-top: 4px;
+        }
+
+        .price-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .price-detail-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .price-detail-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mall-prices {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #eee;
+        }
+
+        .mall-prices .price-detail-item {
+            margin: 4px 0;
+        }
+
+        .mall-prices .price-detail-label {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .mall-prices .price-detail-value {
+            color: #e60012;
+            font-size: 11px;
+        }
+
+        .activity-stats {
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .activity-main {
+            color: black;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .activity-detail {
+            color: black;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 2px 0;
+        }
+
+        .low-interest {
+            color: #666;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .stat-card:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @keyframes fillAnimation {
+            from { width: 0%; }
+            to { width: 49.2%; }
+        }
+
+        @keyframes slideShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(300%); }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes priceGlow {
+            from { box-shadow: 0 0 5px rgba(255, 164, 37, 0.3); }
+            to { box-shadow: 0 0 20px rgba(255, 164, 37, 0.6); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .back-button {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            margin-right: 8px;
+        }
+
+        .back-button:hover {
+            background: white;
+            transform: translateX(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-button::after {
+            content: '';
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #1E1E1E;
+            border-left: 2px solid #1E1E1E;
+            transform: rotate(-45deg);
+        }
+
+        /* 반응형 레이아웃을 위한 미디어 쿼리 */
+        @media screen and (max-width: 768px) {
+            .stats-container {
+                flex-direction: column;
+            }
+
+            .stat-card {
+                min-width: 100%;
+            }
+
+            .deal-section {
+                padding: 16px;
+            }
+
+            .price-circle {
+                width: 120px;
+                height: 80px;
+            }
+
+            .progress-circle {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .content-container {
+                padding: 12px;
+            }
+
+            .deal-section {
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+
+            .deal-title {
+                font-size: 20px;
+            }
+
+            .current-price {
+                font-size: 18px;
+                padding: 6px;
+            }
+
+            .price-circle {
+                width: 100px;
+                height: 70px;
+            }
+
+            .progress-circle {
+                width: 100px;
+                height: 100px;
+            }
+
+            .circle-percentage {
+                font-size: 20px;
+            }
+        }
+
+        .suggested-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .product-item {
+            background: white;
+            box-shadow: 0px 2px 8px rgba(73, 80, 87, 0.06);
+            border-radius: 12px;
+            border: 1px solid #F1F3F5;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .product-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(73, 80, 87, 0.15);
+            border-color: #e60012;
+        }
+
+        .product-item:hover::before {
+            left: 100%;
+        }
+
+        .product-item:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(73, 80, 87, 0.12);
+        }
+
+        .product-content {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-name {
+            color: #303030;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 24px;
+            flex: 1;
+            transition: color 0.3s ease;
+        }
+
+        .product-item:hover .product-name {
+            color: #e60012;
+        }
+
+        .arrow-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .product-item:hover .arrow-icon {
+            transform: translateX(5px);
+        }
+
+        .arrow-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 10px;
+            border-top: 2px solid #5A5A5A;
+            border-right: 2px solid #5A5A5A;
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: border-color 0.3s ease;
+        }
+
+        .product-item:hover .arrow-icon::after {
+            border-color: #e60012;
+        }
+
+        .product-item.selected {
+            border-color: #e60012;
+            background-color: rgba(230, 0, 18, 0.05);
+        }
+
+        .product-item.selected .product-name {
+            color: #e60012;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #e60012;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            background: rgba(230, 0, 18, 0.05);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .product-selection-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .product-selection-view.hidden {
+            transform: translateY(100%);
+        }
+
+        .product-selection-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-selection-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1E1E1E;
+            flex: 1;
+        }
+
+        .product-selection-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .analysis-view {
+            display: none;
+        }
+
+        .analysis-view.visible {
+            display: block;
+        }
+
+        /* 온라인 쇼핑몰 가격 정보 스타일 */
+        .online-shop-prices {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .online-shop-prices .price-detail-item {
+            margin-bottom: 12px;
+        }
+
+        .online-shop-prices .price-detail-label {
+            color: #666;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .online-shop-prices .price-detail-value {
+            color: #333;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .online-shop-prices .price-detail-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 상품명 선택 뷰 -->
+    <div class="product-selection-view" id="productSelectionView">
+        <div class="product-selection-header">
+            <div class="back-button" id="backButton" title="뒤로가기"></div>
+            <div class="product-selection-title">상품명 선택</div>
+        </div>
+        <div class="product-selection-content">
+            <div class="loading">상품명 후보를 불러오는 중...</div>
+            <div class="suggested-list" id="suggestedList">
+                <!-- 상품명 후보들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 분석 결과 뷰 -->
+    <div class="analysis-view" id="analysisView">
+        <div class="container">
+            <div class="search-container">
+                <div class="back-button" id="analysisBackButton" title="뒤로가기"></div>
+                <div class="search-bar" id="searchBar">
+                    <input type="text" class="search-text" id="product-name" placeholder="상품명을 불러오는 중...">
+                    <div class="search-icon"></div>
+                </div>
+            </div>
+            
+            <div class="content-container">
+                <div class="current-product">
+                    <div class="current-label">현재 게시글의 상품</div>
+                    <div class="product-title" id="product-title">
+                        상품 정보를 불러오는 중...
+                    </div>
+                </div>
+                
+                <div class="deal-section">
+                    <div class="deal-header">
+                        <div class="deal-title">거래 한번 해보시죠</div>
+                        <div class="deal-arrow" id="dealArrow"></div>
+                    </div>
+                    
+                    <div class="price-bar-container">
+                        <div class="price-bar">
+                            <div class="price-fill" id="priceFill"></div>
+                        </div>
+                        <div class="price-labels">
+                            <div class="price-label">최저</div>
+                            <div class="price-label">최고</div>
+                        </div>
+                    </div>
+                    
+                    <div class="current-price" id="currentPrice">-</div>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-card" id="priceStatCard">
+                        <div class="tooltip">새제품 대비 가격 비율을 확인하세요</div>
+                        <div class="stat-card-header">
+                            <div class="stat-title">새제품 가격의..</div>
+                            <div class="stat-arrow"></div>
+                        </div>
+                        <div class="price-circle">
+                            <svg class="progress-circle" viewBox="0 0 160 160">
+                                <defs>
+                                    <linearGradient id="priceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                                        <stop offset="25%" style="stop-color:#feca57;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#48dbfb;stop-opacity:1" />
+                                        <stop offset="75%" style="stop-color:#ff9ff3;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#54a0ff;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <path class="progress-bg" d="M 80 20 A 60 60 0 0 1 80 140"></path>
+                                <path class="progress-bar" id="progressPath" d="M 80 20 A 60 60 0 0 1 80 140"></path>
+                            </svg>
+                            <div class="circle-content">
+                                <div class="circle-percentage" id="priceRatio">-</div>
+                                <div class="circle-label">새제품 최저가 대비</div>
+                            </div>
+                        </div>
+                        <div class="price-details">
+                            <div class="price-detail-item">
+                                <span class="price-detail-label">새제품 최저가</span>
+                                <span class="price-detail-value" id="newPrice">-</span>
+                            </div>
+                            <div class="price-detail-item">
+                                <span class="price-detail-label">현재 가격</span>
+                                <span class="price-detail-value" id="currentPriceDetail">-</span>
+                            </div>
+                            <div class="price-detail-item">
+                                <span class="price-detail-label">할인율</span>
+                                <span class="price-detail-value" id="discountRate">-</span>
+                            </div>
+                            <!-- 온라인 쇼핑몰 가격 정보 -->
+                            <div class="online-shop-prices">
+                                <div class="price-detail-item">
+                                    <span class="price-detail-label">G마켓</span>
+                                    <span class="price-detail-value" id="gmarketPrice">-</span>
+                                </div>
+                                <div class="price-detail-item">
+                                    <span class="price-detail-label">11번가</span>
+                                    <span class="price-detail-value" id="elevenstreetPrice">-</span>
+                                </div>
+                                <div class="price-detail-item">
+                                    <span class="price-detail-label">쿠팡</span>
+                                    <span class="price-detail-value" id="coupangPrice">-</span>
+                                </div>
+                                <div class="price-detail-item">
+                                    <span class="price-detail-label">옥션</span>
+                                    <span class="price-detail-value" id="auctionPrice">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" id="activityStatCard">
+                        <div class="tooltip">실시간 상품 관심도를 확인하세요</div>
+                        <div class="stat-card-header">
+                            <div class="stat-title">사람들의 관심이..</div>
+                            <div class="stat-arrow"></div>
+                        </div>
+                        <div class="activity-stats">
+                            <div class="activity-main" id="interestLevel">-</div>
+                            <div class="activity-detail" id="viewCount">-</div>
+                            <div class="activity-detail" id="wishCount">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sidepanel_product.js"></script>
+</body>
+</html> 

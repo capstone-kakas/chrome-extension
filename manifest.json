@@ -1,30 +1,51 @@
 {
     "manifest_version": 3,
-    "name": "Chat Side Panel",
+    "name": "까까스",
     "version": "1.0",
-    "description": "채팅 메시지를 사이드탭에 표시하는 확장 프로그램",
+    "description": "중고 거래 도우미",
+    "icons": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "64": "icons/icon64.png",
+        "96": "icons/icon96.png",
+        "128": "icons/icon128.png"
+    },
     "permissions": [
+      "storage",
+      "tabs",
       "sidePanel",
       "scripting"
     ],
     "host_permissions": [
-      "https://*.bunjang.co.kr/*",
-      "https://talk.bunjang.co.kr/*"
-    ],
+    "*://m.bunjang.co.kr/*",
+    "*://talk.bunjang.co.kr/*",
+    "*://*.bunjang.co.kr/*",
+    "https://13.125.148.205:443/*"
+  ],
     "side_panel": {
-      "default_path": "sidepanel_chat.html"
+      "default_path": "sidepanel.html"
     },
     "content_scripts": [
       {
         "matches": [
-          "https://talk.bunjang.co.kr/*"
-        ],
+          "*://m.bunjang.co.kr/*",
+          "*://talk.bunjang.co.kr/*",
+          "*://*.bunjang.co.kr/*"
+        ], 
         "js": ["content_script.js"],
-        "all_frames": true
+        "all_frames": true,
+        "run_at": "document_idle"
       }
     ],
     "action": {
-      "default_title": "채팅 사이드탭 열기"
+      "default_title": "채팅 사이드탭 열기",
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "64": "icons/icon64.png",
+        "96": "icons/icon96.png",
+        "128": "icons/icon128.png"
+      }
     },
     "background": {
       "service_worker": "background.js"

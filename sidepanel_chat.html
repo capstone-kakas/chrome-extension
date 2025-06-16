@@ -222,14 +222,125 @@
       fill: #fff;
       display: block;
     }
+    /* 상품 정보 스타일 */
+    .product-info-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .product-info-container h4 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .product-info-container p {
+      margin: 5px 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .product-info-container .price {
+      color: var(--point);
+      font-weight: 600;
+    }
+    .product-info-container .status {
+      color: #4CAF50;
+    }
+    .product-info-container .delivery {
+      color: #2196F3;
+    }
+    .product-info-container .category {
+      color: #9C27B0;
+    }
+    .product-info-container .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 5px;
+    }
+    .product-info-container .close-btn:hover {
+      color: #666;
+    }
+    /* 채팅 메시지 스타일 */
+    .chat-container {
+      width: 100%;
+      height: calc(100vh - 300px);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chat-message.me {
+      align-self: flex-end;
+      background: var(--point-gradient);
+      color: white;
+    }
+    .chat-message.other {
+      align-self: flex-start;
+      background: white;
+      color: var(--text-strong);
+      box-shadow: var(--shadow);
+    }
+    .message-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .message-time {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    .product-info-message {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--point-light);
+      border-radius: 16px;
+      margin: 8px 0;
+    }
+    .product-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .info-text {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+    .product-text {
+      font-size: 14px;
+      color: var(--text-strong);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
   <div class="main-wrap">
     <div class="greeting-block">
       <div class="greeting-title-block">
-        <div class="greeting-title">반가워요,</div>
-        <div class="greeting-desc">오늘도 제대로 깎아보자구요!</div>
+        <h1 class="greeting-title">AI 네고</h1>
+        <p class="greeting-desc">채팅 내용을 분석하여 최적의 가격을 제안해드립니다.</p>
       </div>
       <div class="suggestion-block">
         <div class="suggestion-row">
@@ -241,16 +352,32 @@
         </div>
       </div>
     </div>
+
+    <!-- 채팅 메시지 컨테이너 추가 -->
+    <div class="chat-container"></div>
+
     <div class="chat-input-area">
       <div class="quote-ref"></div>
       <div class="chat-input-box">
-        <input class="chat-input" type="text" placeholder="무엇이든 물어보세요" />
+        <input type="text" class="chat-input" placeholder="메시지를 입력하세요...">
         <button class="send-btn">
-          <svg viewBox="0 0 24 24"><path d="M3 12l18-7-7 18-2.5-7z"/></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
         </button>
       </div>
     </div>
   </div>
+
+  <div id="productInfoContainer" class="product-info-container" style="display: none;">
+    <h4>상품 정보</h4>
+    <p class="price"></p>
+    <p class="status"></p>
+    <p class="delivery"></p>
+    <p class="category"></p>
+    <button class="close-btn">닫기</button>
+  </div>
+
   <script src="sidepanel_chat.js"></script>
 </body>
 </html> 
