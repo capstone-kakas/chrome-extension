@@ -657,7 +657,7 @@ const API = {
                 chatRoomId = currentProduct.chatRoomId;
             }
         }
-        const url = 'https://13.125.148.205/api/chatroom/chat';
+        const url = 'https://13.125.148.205/api/chatroom/chat/eval';
         const body = JSON.stringify({ chatRoomId, question });
         const data = await this.request(url, {
             method: 'POST',
@@ -767,11 +767,17 @@ function updateConnectButtonState() {
 
 // 번개장터 채팅 메시지 표시 함수
 function displayBunjangChat(chatData) {
+    console.log('displayBunjangChat 함수 호출됨', chatData);  // 함수 진입 확인
+    
     const container = document.getElementById('bunjangChatContainer');
-    if (!container) return;
+    if (!container) {
+        console.log('bunjangChatContainer를 찾을 수 없음');  // 컨테이너 존재 여부 확인
+        return;
+    }
 
     // 채팅 데이터가 있으면 연결 상태로 변경
     if (chatData && chatData.messages && chatData.messages.length > 0) {
+        console.log('채팅 데이터 확인됨', chatData.messages.length);  // 채팅 데이터 확인
         isChatConnected = true;
         updateConnectButtonState();
     }
@@ -876,13 +882,17 @@ function displayBunjangChat(chatData) {
                 chatRoomId = currentProduct.chatRoomId;
             }
         }
+        console.log('🔄 추천 질문 업데이트 시작', chatRoomId);
         if (chatRoomId) {
             try {
                 const questions = await API.getRecommendQuestions(chatRoomId);
+                console.log('🔄 추천 질문 업데이트 시작', questions);
                 if (Array.isArray(questions) && questions.length > 0) {
+
                     recommendQuestions = questions;
                     recommendIndex = 0;
                     renderRecommendButtons();
+
                 } else {
                     recommendContainer.innerHTML = '<div style="color:#aaa;font-size:13px;">추천 질문이 없습니다.</div>';
                 }
