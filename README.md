@@ -1,44 +1,160 @@
-# Kakas Chrome Extension!
 
-Kakas 프로젝트를 위한 크롬 익스텐션입니다.  
-웹 페이지 상에서 필요한 정보를 추출하거나 사용자 편의를 위한 인터페이스를 제공합니다.
+### 📄 주요 파일 설명
 
----
-
-## 🚀 주요 기능
-
-- 웹 페이지 DOM 추출 및 전송
-- 버튼 클릭 시 사용자 요청 트리거
-- Spring Boot 백엔드 또는 AI 서버와 연동
+- **manifest.json**: 확장 프로그램 메타데이터, 권한 설정, 매니페스트 V3 규격
+- **background.js**: 백그라운드에서 실행되는 서비스 워커, API 통신 관리
+- **content_script.js**: 웹 페이지에 주입되어 상품 정보 수집 및 DOM 조작
+- **sidepanel.html/js/css**: 메인 사이드패널 - 상품 요약 및 AI 분석 요청
+- **sidepanel_chat.html/js**: AI 채팅 기능 - 협상 문구 추천 및 대화 분석
+- **sidepanel_product.html/js**: 상품 분석 - 시세 비교 및 유의사항 제공
 
 ---
 
-## 📁 프로젝트 구조
-kakas/  
-content_script.js       
-- 웹 페이지에서 동작하는 스크립트
+## 🚀 사용법
 
-popup.html
-- 확장 프로그램 팝업 UI
+### 기본 워크플로우
 
-manifest.json
-- 크롬 익스텐션 설정 파일 (manifest V3)  
+1. **상품 페이지 접속**
+   - 번개장터 모바일 웹에서 원하는 상품 페이지로 이동
+
+2. **자동 사이드패널 실행**
+   - 확장 프로그램이 자동으로 감지하여 사이드패널 열림
+   - 상품 요약 정보와 "AI 분석 요청" 버튼 확인
+
+3. **AI 분석 요청**
+   - "AI 분석 요청" 버튼 클릭
+   - 상품 분석 및 추천 문구 탭으로 자동 전환
+
+4. **채팅 기능 활용**
+   - 번개장터 채팅 페이지에서 자동 활성화
+   - AI가 제안하는 협상 문구를 클릭하여 복사
+
+### 수동 실행 방법
+
+- **확장 프로그램 아이콘 클릭**: 오른쪽 상단 확장 아이콘을 통해 수동으로 사이드패널 열기
+- **브라우저 사이드패널**: 브라우저 우측의 사이드패널 아이콘 클릭
+
 ---
 
-## 🛠️ 설치 방법 (로컬 테스트)
-1. 크롬 브라우저에서 `chrome://extensions` 접속
-<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/d080a00a-7c63-4fcd-84d2-c845189beca7" />  
-2. 우측 상단 "개발자 모드" ON  <br>
-3. "압축해제된 확장 프로그램을 로드" 클릭  <br>
-4. 이 프로젝트 폴더(`kakas/`) 선택
+## 🛠️ 설치 방법
+
+### 로컬 개발 환경
+
+1. **크롬 브라우저에서 확장 프로그램 페이지 접속**
+   ```bash
+   chrome://extensions
+   ```
+
+2. **개발자 모드 활성화**
+   - 우측 상단 "개발자 모드" 토글 ON
+
+3. **확장 프로그램 로드**
+   - "압축해제된 확장 프로그램을 로드" 버튼 클릭
+   - 이 프로젝트 폴더(`chrome-extension/`) 선택
+
+4. **확인**
+   - 확장 프로그램이 성공적으로 로드되면 브라우저 툴바에 아이콘 표시
+   - 번개장터 모바일 웹 페이지에서 자동 실행 확인
+
+---
+
+## 🔧 기술적 세부사항
+
+### 아키텍처
+
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Backend**: Spring Boot REST API
+- **AI Service**: 별도 AI 서버 (협상 문구 생성, 대화 분석)
+- **Authentication**: JWT 토큰 기반 인증
+
+### 데이터 플로우
+
+1. **데이터 수집**: `content_script.js`가 웹페이지에서 상품 정보 수집
+2. **데이터 처리**: `sidepanel.js`가 수집된 데이터를 시각화
+3. **API 통신**: `fetch()`를 통해 Spring Boot API 서버에 요청
+4. **AI 처리**: AI 서버에서 문구 및 분석 결과 생성
+5. **결과 표시**: 처리된 결과를 사이드패널에 표시
+
+### 주요 API 엔드포인트
+
+- `POST /api/analyze-product`: 상품 분석 요청
+- `POST /api/generate-chat`: AI 협상 문구 생성
+- `GET /api/market-price`: 시세 데이터 조회
+- `POST /api/chat-summary`: 대화 요약 생성
+
+### 보안 및 개인정보
+
+- **수집 데이터**: 상품 정보(상품명, 가격, 이미지)만 수집
+- **개인정보**: 사용자 개인정보는 수집하지 않음
+- **통신 보안**: HTTPS 기반 API 통신
+- **데이터 저장**: 로컬 스토리지 사용, 서버에 개인정보 저장하지 않음
 
 ---
 
 ## 🔗 백엔드 및 AI 연동
 
-- 📦 Spring Boot 백엔드: [kakas-backend](https://github.com/capstone-kakas/backend)
-- 🧠 AI 서버: [kakas-ai](https://github.com/capstone-kakas/ai)
+- 📦 **Spring Boot 백엔드**: [kakas-backend](https://github.com/capstone-kakas/backend)
+- 🧠 **AI 서버**: [kakas-ai](https://github.com/capstone-kakas/ai)
 
-> 이 확장 프로그램은 위 백엔드들과 API 통신을 수행합니다.
+> 이 확장 프로그램은 위 백엔드들과 REST API를 통해 통신하며, JWT 토큰을 사용한 인증을 수행합니다.
 
 ---
+
+## ❓ 자주 묻는 질문 (FAQ)
+
+### Q. 다른 중고거래 플랫폼에서도 사용할 수 있나요?
+**A.** 현재는 번개장터만 지원하며, 플랫폼 구조에 따라 추후 당근마켓 등으로 확장 예정입니다.
+
+### Q. 이 확장 프로그램은 무료인가요?
+**A.** 네, 현재는 공개 테스트 목적으로 무료 제공 중입니다.
+
+### Q. 어떤 데이터가 수집되나요?
+**A.** 사용자가 보고 있는 상품의 정보(상품명, 가격, 이미지 등)만 수집되며, 개인 정보는 수집하지 않습니다.
+
+### Q. AI가 제안하는 협상 문구는 신뢰할 수 있나요?
+**A.** AI는 과거 거래 데이터를 학습하여 제안하지만, 최종 판단은 사용자가 하시기 바랍니다.
+
+---
+
+## 🐛 문제 해결
+
+### 자주 발생하는 문제
+
+| 문제 상황 | 원인 | 해결 방법 |
+|-----------|------|-----------|
+| 확장 프로그램이 자동 실행되지 않음 | manifest의 matches 설정 오류 | matches 확인, `document_idle` 또는 `document_start` 적절히 조정 |
+| API 통신 실패 | HTTPS/HTTP 혼용, CORS 문제 | 서버 주소를 HTTPS로 통일하거나 프록시 설정 필요 |
+| 사이드패널이 열리지 않음 | 크롬 정책에 따른 자동 실행 제한 | 확장 아이콘 클릭으로 수동 실행 |
+
+### 개발자 도구 활용
+
+- **F12 개발자 도구**: 콘솔에서 에러 메시지 확인
+- **Network 탭**: API 통신 상태 모니터링
+- **Application 탭**: 로컬 스토리지 및 세션 확인
+
+---
+
+## 🤝 기여하기
+
+1. 이 저장소를 Fork합니다
+2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/AmazingFeature`)
+3. 변경사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`)
+4. 브랜치에 Push합니다 (`git push origin feature/AmazingFeature`)
+5. Pull Request를 생성합니다
+
+---
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+
+---
+
+## 📞 문의
+
+- **이슈 리포트**: [GitHub Issues](https://github.com/capstone-kakas/chrome-extension/issues)
+- **기능 제안**: [GitHub Discussions](https://github.com/capstone-kakas/chrome-extension/discussions)
+
+---
+
+**Kakas**와 함께 더 스마트한 중고 거래를 경험해보세요! 🚀
