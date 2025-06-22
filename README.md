@@ -132,29 +132,5 @@
 - **Network 탭**: API 통신 상태 모니터링
 - **Application 탭**: 로컬 스토리지 및 세션 확인
 
----
-
-## 🤝 기여하기
-
-1. 이 저장소를 Fork합니다
-2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/AmazingFeature`)
-3. 변경사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`)
-4. 브랜치에 Push합니다 (`git push origin feature/AmazingFeature`)
-5. Pull Request를 생성합니다
-
----
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
-
----
-
-## 📞 문의
-
-- **이슈 리포트**: [GitHub Issues](https://github.com/capstone-kakas/chrome-extension/issues)
-- **기능 제안**: [GitHub Discussions](https://github.com/capstone-kakas/chrome-extension/discussions)
-
----
 
 **Kakas**와 함께 더 스마트한 중고 거래를 경험해보세요! 🚀
