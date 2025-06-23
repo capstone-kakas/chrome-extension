@@ -77,10 +77,10 @@
 
 ### 주요 API 엔드포인트
 
-- `POST /api/analyze-product`: 상품 분석 요청
-- `POST /api/generate-chat`: AI 협상 문구 생성
-- `GET /api/market-price`: 시세 데이터 조회
-- `POST /api/chat-summary`: 대화 요약 생성
+- `GET /usedPrices/list`: 시세 데이터 조회
+- `POST /api/chatroom/chat`: 사용자질문 → 답변
+- `GET /api/chatroom/recommend/{chatRoomId}`: 추천 문구 생성
+- `POST /api/chatroom/chat/eval`: 사용자질문→답변과 그에 대한 평가점수
 
 ### 보안 및 개인정보
 
